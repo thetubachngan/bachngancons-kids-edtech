@@ -27,7 +27,7 @@ const speakerEmoji: Record<"bee" | "cat", string> = {
 };
 
 export const ConversationSection = ({ conversations }: ConversationSectionProps) => {
-  const { speak } = useSpeech();
+  const { speak, stop } = useSpeech();
   const [activeScenarioId, setActiveScenarioId] = useState(conversations[0]?.id ?? "");
   const [activeLineIndex, setActiveLineIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -36,6 +36,12 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
     () => conversations.find((scenario) => scenario.id === activeScenarioId) ?? conversations[0],
     [activeScenarioId, conversations],
   );
+
+  useEffect(() => {
+    return () => {
+      stop();
+    };
+  }, [stop]);
 
   useEffect(() => {
     if (!isPlaying || !activeScenario) {
@@ -47,20 +53,19 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
       return;
     }
 
-    speak(activeLine.english, 0.8);
-
-    const timer = window.setTimeout(() => {
-      setActiveLineIndex((current) => {
-        if (current >= activeScenario.lines.length - 1) {
+    speak({
+      text: activeLine.english,
+      kind: "sentence",
+      rate: 0.78,
+      onEnd: () => {
+        if (activeLineIndex >= activeScenario.lines.length - 1) {
           setIsPlaying(false);
-          return current;
+          return;
         }
 
-        return current + 1;
-      });
-    }, 3200);
-
-    return () => window.clearTimeout(timer);
+        setActiveLineIndex((current) => current + 1);
+      },
+    });
   }, [activeLineIndex, activeScenario, isPlaying, speak]);
 
   if (!activeScenario) {
@@ -92,6 +97,7 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                   key={scenario.id}
                   type="button"
                   onClick={() => {
+                    stop();
                     setActiveScenarioId(scenario.id);
                     setActiveLineIndex(0);
                     setIsPlaying(false);
@@ -140,7 +146,15 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                 <div className="flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={() => setIsPlaying((current) => !current)}
+                    onClick={() => {
+                      if (isPlaying) {
+                        stop();
+                        setIsPlaying(false);
+                        return;
+                      }
+
+                      setIsPlaying(true);
+                    }}
                     className="kid-button border-yellow-600 bg-yellow-300 text-yellow-950"
                   >
                     {isPlaying ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -148,7 +162,15 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                   </button>
                   <button
                     type="button"
-                    onClick={() => speak(activeLine.english, 0.8)}
+                    onClick={() => {
+                      stop();
+                      setIsPlaying(false);
+                      speak({
+                        text: activeLine.english,
+                        kind: "sentence",
+                        rate: 0.78,
+                      });
+                    }}
                     className="kid-button border-sky-600 bg-sky-300 text-sky-950"
                   >
                     <Volume2 className="h-4 w-4" />
@@ -172,6 +194,7 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                 <button
                   type="button"
                   onClick={() => {
+                    stop();
                     setIsPlaying(false);
                     setActiveLineIndex((current) => Math.max(current - 1, 0));
                   }}
@@ -184,6 +207,7 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                 <button
                   type="button"
                   onClick={() => {
+                    stop();
                     setIsPlaying(false);
                     setActiveLineIndex((current) => Math.min(current + 1, activeScenario.lines.length - 1));
                   }}
@@ -202,9 +226,14 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                   key={`${line.english}-${index}`}
                   type="button"
                   onClick={() => {
+                    stop();
                     setIsPlaying(false);
                     setActiveLineIndex(index);
-                    speak(line.english, 0.8);
+                    speak({
+                      text: line.english,
+                      kind: "sentence",
+                      rate: 0.78,
+                    });
                   }}
                   className={`rounded-[1.4rem] border p-4 text-left transition ${
                     index === activeLineIndex

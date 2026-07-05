@@ -129,11 +129,18 @@ export const VocabularySection = ({
             practiceCount={practiceCounts[word.id] ?? 0}
             isLearned={learnedSet.has(word.id)}
             onHearWord={() => {
-              speak(word.word);
+              speak({
+                text: word.speechText ?? word.word,
+                kind: "word",
+              });
               onPracticeWord(word.id);
             }}
             onHearExample={() => {
-              speak(word.example, 0.8);
+              speak({
+                text: word.exampleSpeechText ?? word.example,
+                kind: "sentence",
+                rate: 0.78,
+              });
               onPracticeWord(word.id);
             }}
           />

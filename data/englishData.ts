@@ -13,6 +13,8 @@ export type VocabularyWord = {
   emoji: string;
   example: string;
   exampleTranslation: string;
+  speechText?: string;
+  exampleSpeechText?: string;
 };
 
 export type Topic = {

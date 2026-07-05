@@ -18,6 +18,7 @@ type QuizSectionProps = {
 type QuizQuestion = {
   id: string;
   prompt: string;
+  speechText: string;
   emoji: string;
   correctAnswer: string;
   options: string[];
@@ -45,6 +46,7 @@ const createQuestions = (words: VocabularyWord[]) => {
     return {
       id: word.id,
       prompt: word.word,
+      speechText: word.speechText ?? word.word,
       emoji: word.emoji,
       correctAnswer: word.translation,
       options: shuffleArray([word.translation, ...distractors]),
@@ -166,7 +168,12 @@ export const QuizSection = ({ words, highScore, onEarnStars, onSaveHighScore }: 
                   </div>
                   <button
                     type="button"
-                    onClick={() => speak(currentQuestion.prompt)}
+                    onClick={() =>
+                      speak({
+                        text: currentQuestion.speechText,
+                        kind: "word",
+                      })
+                    }
                     className="kid-button border-sky-600 bg-sky-300 text-sky-950"
                   >
                     <Volume2 className="h-4 w-4" />

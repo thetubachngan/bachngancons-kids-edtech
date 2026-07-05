@@ -1,89 +1,145 @@
-# KẾ HOẠCH TRIỂN KHAI VÀ THIẾT KẾ CHI TIẾT
-## ỨNG DỤNG WEB HỌC TIẾNG ANH LỚP 2 (KIDS EDTECH APP)
+# KẾ HOẠCH TRIỂN KHAI VÀ THIẾT KẾ CHI TIẾT (BẢN CẬP NHẬT ĐA ĐỘ TUỔI & SIÊU TỪ VỰNG)
+## ỨNG DỤNG WEB HỌC TIẾNG ANH CHO TRẺ EM (KIDS EDTECH APP)
 
-Tài liệu này mô tả chi tiết các phân tích kỹ thuật, cấu trúc thư mục, các cải tiến về mặt UI/UX tối ưu cho trẻ em lớp 2 (7-8 tuổi) và lộ trình xây dựng ứng dụng.
-
----
-
-### I. CÁC ĐIỂM CẢI TIẾN VÀ BỔ SUNG CHO PROMPT GỐC
-Để tạo nên một ứng dụng EdTech thực sự thành công, lôi cuốn trẻ nhỏ và giúp các bé tự học một cách độc lập, chúng tôi đề xuất bổ sung các thành phần sau:
-
-#### 1. Gamification (Hệ thống phần thưởng trực quan)
-- **Tích điểm Sao Vàng ⭐**: Mỗi khi bé trả lời đúng 1 câu Quiz hoặc hoàn thành học 1 từ mới, bé sẽ được thưởng 1 đến 3 Sao. Số lượng Sao này sẽ hiển thị sinh động ở góc trên màn hình kèm hiệu ứng bay (flying animation).
-- **Mascot tương tác (Linh vật "Bee" & "Cat")**:
-  - Mascot không chỉ xuất hiện trong hội thoại mà còn xuất hiện ở góc màn hình.
-  - Khi bé trả lời đúng, Mascot nhảy múa phấn khích và tung hoa.
-  - Khi bé chọn sai, Mascot có biểu cảm suy nghĩ nhẹ nhàng (để bé không cảm thấy bị áp lực hay thất bại).
-
-#### 2. UI/UX thân thiện với Trẻ em (Child-Friendly Design)
-- **Nút bấm 3D cỡ lớn**: Tất cả các nút tương tác (Nghe, Lật thẻ, Chọn đáp án) có thiết kế 3D nổi bật, màu sắc tươi sáng, với chiều cao touch target tối thiểu là `56px` để dễ dàng chạm trên iPad/điện thoại.
-- **Phông chữ Bo Tròn (Friendly Rounded Fonts)**: Sử dụng font chữ **Fredoka** hoặc **Quicksand** từ Google Fonts. Đây là font chữ không chân, nét đậm, bo tròn góc, tạo cảm giác vô cùng đáng yêu và dễ đọc với trẻ tập đọc lớp 2.
-- **Màu sắc Pastel năng động**: Dùng các mã màu pastel có độ tương phản cao nhưng không gây mỏi mắt (Xanh lá Mint, Vàng mật ong, Xanh dương da trời, Hồng đào).
-
-#### 3. Âm thanh sinh động (Audio & Sound FX)
-- **Hiệu ứng âm thanh (Sound Effects)**: Tích hợp âm thanh chúc mừng "Ting-ting! 🎉" khi chọn đúng và tiếng động nhẹ "Oh-oh! 💡" khi chọn sai.
-- **Tối ưu Web Speech API**: Xử lý việc tải bất đồng bộ danh sách giọng phát âm của thiết bị, ưu tiên chọn giọng `en-US` hoặc `en-GB` chất lượng cao với tốc độ nói vừa phải (rate = 0.85).
-
-#### 4. Lưu trạng thái học tập (State Persistence)
-- Tự động lưu tiến trình học, số sao, và những chủ đề bé đã học xong vào `localStorage`. Khi bé quay lại app vào hôm sau, các sao vàng của bé vẫn được giữ nguyên để tạo động lực.
+Tài liệu này mô tả chi tiết kế hoạch thiết kế, phân loại chương trình học tiếng Anh theo nhóm tuổi từ **5 tuổi trở lên**, mở rộng kho từ vựng và tối ưu giao diện Edtech trực quan cho bé.
 
 ---
 
-### II. CẤU TRÚC THƯ MỤC DỰ ÁN DỰ KIẾN (NEXT.JS APP ROUTER)
-```text
-bachngancons-app-tieng-anh/
-├── app/
-│   ├── layout.tsx         # Cấu hình font chữ Fredoka, HTML Head, Metadata SEO cho trẻ em
-│   ├── page.tsx           # Dashboard chính, quản lý State chung (Sao, Điểm, Tab hoạt động)
-│   └── globals.css        # Cấu hình Tailwind, CSS 3D Button, Confetti và Keyframes Animations
-├── components/
-│   ├── Navbar.tsx         # Thanh điều hướng sinh động, hiển thị số Sao tích lũy
-│   ├── VocabularySection.tsx # Học từ vựng: Danh sách chủ đề, Flashcards 3D lật thẻ, TTS phát âm
-│   ├── ConversationSection.tsx # Hội thoại: Hoạt cảnh Bee & Cat đối thoại bong bóng chat sinh động
-│   └── QuizSection.tsx    # Ôn tập: Trò chơi nghe và chọn đáp án đúng, Confetti ăn mừng
-├── data/
-│   └── englishData.ts     # Bộ dữ liệu từ vựng & hội thoại lớp 2 phong phú
-├── hooks/
-│   └── useSpeech.ts       # Hook chuyên biệt điều khiển giọng nói tiếng Anh chuẩn, có tùy chỉnh tốc độ
-├── package.json           # Cấu hình dependencies (framer-motion, lucide-react, canvas-confetti)
-├── tailwind.config.ts     # Định nghĩa bảng màu Pastel Kid-Friendly và animations custom
-└── tsconfig.json
-```
+### I. PHÂN CHIA CHƯƠNG TRÌNH THEO ĐỘ TUỔI (AGE GROUPS)
+
+Ứng dụng được chia làm 3 cấp độ học chính thích ứng với sự phát triển của trẻ:
+
+1. **Cấp độ 1: Explorer (5-6 tuổi - Mầm non & Lớp 1)**
+   * **Mục tiêu**: Làm quen với mặt chữ, âm cơ bản (phonics), nhận biết đồ vật, con vật và màu sắc xung quanh thông qua trực quan.
+   * **Thiết kế UI/UX**: Chữ to rõ ràng, tự động phát âm giọng Mỹ/Anh khi mở thẻ (Auto-Speech). Dùng hình ảnh/emoji cỡ lớn làm trọng tâm.
+   * **Cách chơi Quiz**: Nghe từ phát âm -> Click chọn đúng hình Emoji minh họa (không cần đọc dịch nghĩa tiếng Việt).
+
+2. **Cấp độ 2: Builder (7-8 tuổi - Lớp 2 & Lớp 3)**
+   * **Mục tiêu**: Học từ vựng, phiên âm chuẩn, cấu trúc câu giao tiếp đơn giản và thực hành hội thoại ngắn giữa hai Mascot Bee & Cat.
+   * **Thiết kế UI/UX**: Flashcard lật 3D (mặt trước tiếng Anh + phiên âm, mặt sau tiếng Việt). Kịch bản hội thoại tự động chạy lời thoại.
+   * **Cách chơi Quiz**: Trắc nghiệm 4 đáp án (chọn nghĩa tiếng Việt phù hợp hoặc ngược lại).
+
+3. **Cấp độ 3: Challenger (9 tuổi trở lên - Lớp 4 trở lên)**
+   * **Mục tiêu**: Nâng cao phản xạ viết chữ, mở rộng vốn từ sang mô tả thế giới xung quanh (thời tiết, nghề nghiệp, sở thích) và xây dựng hội thoại tương tác.
+   * **Thiết kế UI/UX**: Giao diện thử thách với bảng chữ cái để ghép từ, hội thoại có lựa chọn câu trả lời để bé tương tác.
+   * **Cách chơi Quiz**: Nhìn hình/Nghe phát âm -> Sắp xếp hoặc gõ các chữ cái thành từ vựng hoàn chỉnh (Spelling game).
 
 ---
 
-### III. BỘ DỮ LIỆU TIẾNG ANH LỚP 2 (`data/englishData.ts`)
-Dữ liệu sẽ được tổ chức như sau:
-- **Chủ đề (Topics)**: Mỗi chủ đề có ID, tên tiếng Anh, tên tiếng Việt, Icon đại diện và danh sách từ vựng.
-- **Từ vựng (Vocabulary)**: Gồm từ tiếng Anh, phiên âm quốc tế (phonetics), nghĩa tiếng Việt, emoji/hình vẽ minh họa, câu ví dụ đơn giản.
-- **Hội thoại (Conversations)**: Gồm các tình huống như *Good Morning*, *At school*, *Asking for permission*. Mỗi tình huống gồm một mảng các lời thoại, có chỉ định nhân vật phát ngôn (`bee` hoặc `cat`), câu nói tiếng Anh và nghĩa tiếng Việt tương ứng.
+### II. BỘ DỮ LIỆU TỪ VỰNG CHI TIẾT (130+ TỪ VỰNG)
+
+#### 1. CẤP ĐỘ 1: EXPLORER (5-6 TUỔI)
+
+* **Chủ đề 1: Chữ cái vui nhộn (Phonics & Alphabet - 15 từ)**
+  * **A** - Apple 🍎 (Quả táo)
+  * **B** - Bee 🐝 (Con ong)
+  * **C** - Cat 🐱 (Con mèo)
+  * **D** - Dog 🐶 (Con chó)
+  * **E** - Egg 🥚 (Quả trứng)
+  * **F** - Fish 🐟 (Con cá)
+  * **G** - Grape 🍇 (Quả nho)
+  * **H** - Hat 🎩 (Cái mũ)
+  * **I** - Ice cream 🍦 (Kem)
+  * **J** - Jellyfish 🪼 (Con sứa)
+  * **K** - Kite 🪁 (Cái diều)
+  * **L** - Lion 🦁 (Sư tử)
+  * **M** - Monkey 🐵 (Con khỉ)
+  * **N** - Nest 🪹 (Tổ chim)
+  * **O** - Orange 🍊 (Quả cam)
+
+* **Chủ đề 2: Trái cây thơm ngon (Fruits - 10 từ)**
+  * Banana 🍌 (Quả chuối)
+  * Mango 🥭 (Quả xoài)
+  * Watermelon 🍉 (Quả dưa hấu)
+  * Strawberry 🍓 (Quả dâu tây)
+  * Coconut 🥥 (Quả dừa)
+  * Pear 🍐 (Quả lê)
+  * Peach 🍑 (Quả đào)
+  * Pineapple 🍍 (Quả dứa/thơm)
+  * Lemon 🍋 (Quả chanh vàng)
+  * Cherry 🍒 (Quả anh đào)
+
+* **Chủ đề 3: Thế giới sở thú (Zoo Animals - 12 từ)**
+  * Lion 🦁 (Sư tử)
+  * Tiger 🐯 (Con hổ)
+  * Elephant 🐘 (Con voi)
+  * Monkey 🐵 (Con khỉ)
+  * Zebra 🦓 (Ngựa vằn)
+  * Giraffe 🦒 (Hươu cao cổ)
+  * Bear 🐻 (Con gấu)
+  * Hippo 🦛 (Hà mã)
+  * Kangaroo 🦘 (Chuột túi)
+  * Crocodile 🐊 (Cá sấu)
+  * Panda 🐼 (Gấu trúc)
+  * Penguin 🐧 (Chim cánh cụt)
+
+* **Chủ đề 4: Màu sắc & Hình khối thông dụng (Colors & Shapes - 15 từ)**
+  * Red 🔴 (Màu đỏ)
+  * Blue 🔵 (Màu xanh dương)
+  * Yellow 🟡 (Màu vàng)
+  * Green 🟢 (Màu xanh lá)
+  * Pink 🌸 (Màu hồng)
+  * Orange 🟠 (Màu cam)
+  * Purple 🟣 (Màu tím)
+  * Brown 🟤 (Màu nâu)
+  * Black ⚫ (Màu đen)
+  * White ⚪ (Màu trắng)
+  * Circle ⭕ (Hình tròn)
+  * Square ⬛ (Hình vuông)
+  * Triangle 🔺 (Hình tam giác)
+  * Rectangle ▮ (Hình chữ nhật)
+  * Star ⭐ (Hình ngôi sao)
 
 ---
 
-### IV. KẾ HOẠCH PHÁT TRIỂN & XÁC MINH CHẤT LƯỢNG (VERIFICATION)
-1. **Khởi tạo dự án & cấu hình styling**: Cài đặt Next.js, cấu hình Google Font Fredoka và viết CSS cho nút bấm 3D, hiệu ứng lật thẻ 3D.
-2. **Xây dựng module phát âm (`useSpeech`)**: Viết helper/hook tự động dò tìm và lưu trữ cấu hình giọng đọc chuẩn Mỹ/Anh của trình duyệt.
-3. **Phát triển các component chức năng**:
-   - Hoàn thành giao diện Flashcard đẹp mắt với hiệu ứng lật mượt mà của Framer Motion.
-   - Thiết kế giao diện bong bóng trò chuyện trực quan, có chế độ tự động chạy (autoplay) từng câu hội thoại.
-   - Thiết kế game Quiz trắc nghiệm chọn đáp án với thanh tiến trình ngộ nghĩnh và hiệu ứng Confetti chúc mừng.
-4. **Kiểm thử trên thiết bị thực tế**:
-   - Trình duyệt Chrome/Edge trên PC/Laptop.
-   - Safari/Chrome trên iPad và các thiết bị di động (kiểm tra độ nhạy cảm ứng của nút bấm lớn, hoạt động của tiếng nói speechSynthesis).
+#### 2. CẤP ĐỘ 2: BUILDER (7-8 TUỔI)
+
+* **Chủ đề 1: Gia đình & Nhà cửa (My Family & House - 15 từ)**
+  * Mother 👩 (Mẹ), Father 👨 (Bố), Brother 👦 (Anh/em trai), Sister 👧 (Chị/em gái), Grandmother 👵 (Bà), Grandfather 👴 (Ông), Baby 👶 (Em bé), Uncle 🧔 (Chú/Cậu), Aunt 👩 (Cô/Dì).
+  * House 🏠 (Ngôi nhà), Living room 🛋️ (Phòng khách), Bedroom 🛏️ (Phòng ngủ), Kitchen 🍳 (Phòng bếp), Bathroom 🚿 (Phòng tắm), Garden 🏡 (Khu vườn).
+
+* **Chủ đề 2: Lớp học của em (Classroom & School - 15 từ)**
+  * School 🏫 (Trường học), Classroom 🎒 (Lớp học), Teacher 👩‍🏫 (Giáo viên), Student 🧑‍🎓 (Học sinh), Book 📘 (Quyển sách), Pen 🖊️ (Cây bút), Pencil ✏️ (Bút chì), Ruler 📏 (Thước kẻ), Eraser 🧼 (Cục tẩy), Desk 🪑 (Bàn học), Board 📋 (Bảng viết), Notebook 📓 (Vở ghi bài), Scissors ✂️ (Cái kéo), Crayons 🖍️ (Bút màu), Backpack 🎒 (Cặp sách).
+
+* **Chủ đề 3: Cơ thể của em (My Body & Face - 12 từ)**
+  * Head 👤 (Đầu), Face 👦 (Khuôn mặt), Eye 👁️ (Mắt), Ear 👂 (Tai), Nose 👃 (Mũi), Mouth 👄 (Miệng), Hand ✋ (Bàn tay), Arm 💪 (Cánh tay), Leg 🦵 (Chân), Foot 🦶 (Bàn chân), Hair 💇 (Tóc), Tooth 🦷 (Răng).
+
+* **Chủ đề 4: Món ăn, Thức uống & Đồ chơi (Food & Toys - 15 từ)**
+  * Rice 🍚 (Cơm), Bread 🍞 (Bánh mì), Milk 🥛 (Sữa), Water 💧 (Nước), Chicken 🍗 (Thịt gà), Fish 🐟 (Cá), Egg 🍳 (Trứng), Soup 🍲 (Canh/Súp), Cake 🍰 (Bánh ngọt), Juice 🧃 (Nước hoa quả).
+  * Toy 🧸 (Đồ chơi), Doll 🪆 (Búp bê), Ball ⚽ (Quả bóng), Robot 🤖 (Người máy), Car 🚗 (Ô tô đồ chơi).
 
 ---
 
-### V. CÁC BƯỚC KHỞI ĐẦU NHANH
-Khi bạn sẵn sàng chạy dự án, hãy sử dụng các lệnh sau:
-1. Tạo dự án Next.js mới trong thư mục này:
-   ```bash
-   npx create-next-app@latest ./ --typescript --tailwind --app --src-dir=false --eslint --import-alias="@/*"
-   ```
-2. Cài đặt các package đi kèm:
-   ```bash
-   npm install framer-motion lucide-react canvas-confetti @types/canvas-confetti
-   ```
-3. Sau đó chạy server phát triển:
-   ```bash
-   npm run dev
-   ```
+#### 3. CẤP ĐỘ 3: CHALLENGER (9 TUỔI TRỞ LÊN)
+
+* **Chủ đề 1: Hoạt động hàng ngày & Động từ (Daily Routine - 15 từ)**
+  * Wake up 🌅 (Thức dậy), Wash face 🧼 (Rửa mặt), Brush teeth 🪥 (Đánh răng), Have breakfast 🍳 (Ăn sáng), Go to school 🏫 (Đi học), Do homework ✍️ (Làm bài tập), Play sports ⚽ (Chơi thể thao), Take a shower 🚿 (Tắm), Go to bed 🛌 (Đi ngủ), Read books 📚 (Đọc sách), Clean the house 🧹 (Dọn dẹp nhà cửa), Watch TV 📺 (Xem tivi), Listen to music 🎧 (Nghe nhạc), Cook dinner 🧑‍🍳 (Nấu bữa tối), Ride a bike 🚲 (Đi xe đạp).
+
+* **Chủ đề 2: Thời tiết & Mùa (Weather & Seasons - 12 từ)**
+  * Spring 🌸 (Mùa xuân), Summer 🏖️ (Mùa hè), Autumn 🍂 (Mùa thu), Winter ❄️ (Mùa đông), Sunny ☀️ (Trời nắng), Rainy 🌧️ (Trời mưa), Windy 💨 (Trời gió), Cloudy ☁️ (Nhiều mây), Snowy ☃️ (Có tuyết), Stormy ⛈️ (Có bão lớn), Rainbow 🌈 (Cầu vồng), Temperature 🌡️ (Nhiệt độ).
+
+* **Chủ đề 3: Nghề nghiệp ước mơ (Jobs & Occupations - 15 từ)**
+  * Doctor 🧑‍⚕️ (Bác sĩ), Nurse 🧑‍⚕️ (Y tá), Teacher 🧑‍🏫 (Giáo viên), Police officer 👮 (Cảnh sát), Firefighter 👨‍🚒 (Lính cứu hỏa), Chef 🧑‍🍳 (Đầu bếp), Pilot 🧑‍✈️ (Phi công), Singer 🎤 (Ca sĩ), Artist 🎨 (Họa sĩ), Farmer 🧑‍🌾 (Nông dân), Dentist 🦷 (Nha sĩ), Astronaut 👨‍🚀 (Phi hành gia), Writer ✍️ (Nhà văn), Actor 🎭 (Diễn viên), Vet 🐶 (Bác sĩ thú y).
+
+* **Chủ đề 4: Sở thích, Thể thao & Phương tiện (Hobbies & Transport - 15 từ)**
+  * Soccer/Football ⚽ (Bóng đá), Swimming 🏊 (Bơi lội), Running 🏃 (Chạy bộ), Drawing 🎨 (Vẽ tranh), Singing 🎤 (Hát), Dancing 💃 (Nhảy múa), Cooking 🍳 (Nấu ăn), Playing piano 🎹 (Chơi đàn piano), Photography 📷 (Chụp ảnh).
+  * Bus 🚌 (Xe buýt), Train 🚆 (Tàu hỏa), Plane ✈️ (Máy bay), Bicycle 🚲 (Xe đạp), Boat ⛵ (Thuyền bè).
+
+---
+
+### III. THIẾT KẾ UI/UX PHONG CÁCH EDTECH CAO CẤP
+
+Để đạt tính thẩm mỹ như các app lớn trên thị trường (Duolingo, Monkey Stories, v.v.):
+1. **Lựa chọn gam màu (Pastel & Warm)**: Sử dụng các sắc độ dịu mát như xanh lá Mint, vàng mật ong, hồng đào, xanh lam nhạt. Đảm bảo độ tương phản rõ nhưng không gây mỏi mắt cho bé.
+2. **Nút bấm 3D nổi bật**: Sử dụng hiệu ứng CSS shadow nổi (3D look) tạo cảm giác như bé đang chạm vào phím bấm đồ chơi nhựa.
+3. **Hoạt ảnh Mascot bồng bềnh**: Chú ong "Bee" và mèo "Cat" sẽ có hoạt ảnh dao động bồng bềnh (Framer Motion float transition) kèm khung lời thoại gợi ý sinh động.
+4. **Phần thưởng Dopamine**: Bắn pháo hoa `canvas-confetti` rực rỡ và phát nhạc chúc mừng "Ting-ting! 🎉" khi bé trả lời đúng.
+
+---
+
+### IV. TIẾN TRÌNH THỰC HIỆN DỰ KIẾN (KHI ĐƯỢC PHÊ DUYỆT CODES)
+
+1. **Bước 1**: Cập nhật tệp cơ sở dữ liệu `data/englishData.ts` với đầy đủ 130+ từ vựng và phân loại `ageGroup`.
+2. **Bước 2**: Sửa giao diện chính `app/page.tsx`, tích hợp màn hình lựa chọn cấp độ tuổi và bộ lọc.
+3. **Bước 3**: Cập nhật Header/Navbar để người dùng chuyển đổi độ tuổi ngay trong phiên học.
+4. **Bước 4**: Nâng cấp các cấu phần `VocabularySection`, `QuizSection` và cấu phần hội thoại để thích ứng với 3 mức độ chơi khác nhau.

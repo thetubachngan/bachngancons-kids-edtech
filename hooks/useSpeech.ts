@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const isBrowser = typeof window !== "undefined";
 const WORD_RATE = 0.74;
 const SENTENCE_RATE = 0.78;
 const WORD_PITCH = 1;
@@ -68,6 +67,7 @@ const pickPreferredVoice = (availableVoices: SpeechSynthesisVoice[]) => {
 };
 
 export const useSpeech = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [preferredVoice, setPreferredVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -75,22 +75,41 @@ export const useSpeech = () => {
   const requestIdRef = useRef(0);
   const lastRequestRef = useRef<{ text: string; at: number } | null>(null);
 
-  const loadVoices = useCallback(() => {
-    if (!isBrowser || !window.speechSynthesis) {
-      return;
+  const getSpeechSynthesis = useCallback(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      return null;
     }
 
-    const availableVoices = window.speechSynthesis.getVoices();
-    setVoices(availableVoices);
-    setPreferredVoice(pickPreferredVoice(availableVoices));
+    return window.speechSynthesis;
   }, []);
 
   useEffect(() => {
-    if (!isBrowser || !window.speechSynthesis) {
+    const frame = window.requestAnimationFrame(() => {
+      setHydrated(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  const loadVoices = useCallback(() => {
+    const speechSynthesis = getSpeechSynthesis();
+    if (!speechSynthesis) {
       return;
     }
 
-    const speechSynthesis = window.speechSynthesis;
+    const availableVoices = speechSynthesis.getVoices();
+    setVoices(availableVoices);
+    setPreferredVoice(pickPreferredVoice(availableVoices));
+  }, [getSpeechSynthesis]);
+
+  useEffect(() => {
+    const speechSynthesis = getSpeechSynthesis();
+    if (!speechSynthesis) {
+      return;
+    }
+
     const frame = window.requestAnimationFrame(loadVoices);
     const handleVoicesChanged = () => loadVoices();
 
@@ -101,22 +120,24 @@ export const useSpeech = () => {
       speechSynthesis.removeEventListener("voiceschanged", handleVoicesChanged);
       speechSynthesis.cancel();
     };
-  }, [loadVoices]);
+  }, [getSpeechSynthesis, loadVoices]);
 
   const stop = useCallback(() => {
-    if (!isBrowser || !window.speechSynthesis) {
+    const speechSynthesis = getSpeechSynthesis();
+    if (!speechSynthesis) {
       return;
     }
 
     requestIdRef.current += 1;
     currentUtteranceRef.current = null;
     setIsSpeaking(false);
-    window.speechSynthesis.cancel();
-  }, []);
+    speechSynthesis.cancel();
+  }, [getSpeechSynthesis]);
 
   const speak = useCallback(
     (options: SpeakOptions) => {
-      if (!isBrowser || !window.speechSynthesis) {
+      const speechSynthesis = getSpeechSynthesis();
+      if (!speechSynthesis) {
         return;
       }
 
@@ -141,7 +162,6 @@ export const useSpeech = () => {
         at: now,
       };
 
-      const speechSynthesis = window.speechSynthesis;
       if (!voices.length) {
         loadVoices();
       }
@@ -197,15 +217,17 @@ export const useSpeech = () => {
 
       speechSynthesis.speak(utterance);
     },
-    [loadVoices, preferredVoice, voices.length],
+    [getSpeechSynthesis, loadVoices, preferredVoice, voices.length],
   );
 
-  const canSpeak = isBrowser && "speechSynthesis" in window;
+  const canSpeak = hydrated && Boolean(getSpeechSynthesis());
+  const isReady = hydrated;
 
   return {
     voices,
-    preferredVoice,
+    preferredVoice: isReady ? preferredVoice : null,
     canSpeak,
+    isReady,
     isSpeaking,
     speak,
     stop,

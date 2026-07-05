@@ -23,7 +23,7 @@ export const VocabularySection = ({
   onSelectTopic,
   onPracticeWord,
 }: VocabularySectionProps) => {
-  const { canSpeak, speak, preferredVoice } = useSpeech();
+  const { canSpeak, isReady, speak, preferredVoice } = useSpeech();
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId) ?? topics[0];
   const learnedSet = new Set(learnedWords);
   const selectedLearnedCount = selectedTopic.words.filter((word) => learnedSet.has(word.id)).length;
@@ -109,9 +109,9 @@ export const VocabularySection = ({
           <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-600">
             <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold shadow-sm">
               <Volume2 className="h-4 w-4 text-sky-500" />
-              {canSpeak ? "Có thể phát âm trực tiếp" : "Trình duyệt chưa hỗ trợ phát âm"}
+              {isReady ? (canSpeak ? "Có thể phát âm trực tiếp" : "Trình duyệt chưa hỗ trợ phát âm") : "Đang kiểm tra hỗ trợ phát âm..."}
             </span>
-            {preferredVoice ? (
+            {isReady && preferredVoice ? (
               <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold shadow-sm">
                 Giọng đang chọn: {preferredVoice.name}
               </span>

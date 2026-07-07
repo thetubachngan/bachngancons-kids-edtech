@@ -68,8 +68,9 @@ export const ConversationSection = ({ level, title, description, conversations }
 
     speak({
       text: activeLine.english,
+      audioSrc: activeLine.audioSrc,
       kind: "sentence",
-      rate: level === "challenger" ? 0.78 : 0.74,
+      rate: level === "challenger" ? 0.72 : 0.68,
       source: "conversation",
       mode: "autoplay",
       interrupt: "same-source",
@@ -193,8 +194,9 @@ export const ConversationSection = ({ level, title, description, conversations }
                       setIsPlaying(false);
                       speak({
                         text: activeLine.english,
+                        audioSrc: activeLine.audioSrc,
                         kind: "sentence",
-                        rate: level === "challenger" ? 0.78 : 0.74,
+                        rate: level === "challenger" ? 0.72 : 0.68,
                         source: "conversation",
                         mode: "manual",
                         interrupt: "all",
@@ -263,8 +265,9 @@ export const ConversationSection = ({ level, title, description, conversations }
                     setActiveLineIndex(index);
                     speak({
                       text: line.english,
+                      audioSrc: line.audioSrc,
                       kind: "sentence",
-                      rate: level === "challenger" ? 0.78 : 0.74,
+                      rate: level === "challenger" ? 0.72 : 0.68,
                       source: "conversation",
                       mode: "manual",
                       interrupt: "all",

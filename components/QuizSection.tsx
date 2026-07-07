@@ -23,6 +23,7 @@ type EmojiQuestion = {
   id: string;
   prompt: string;
   speechText: string;
+  audioSrc?: string;
   correctAnswer: string;
   options: string[];
 };
@@ -32,6 +33,7 @@ type MeaningQuestion = {
   id: string;
   prompt: string;
   speechText: string;
+  audioSrc?: string;
   emoji: string;
   correctAnswer: string;
   options: string[];
@@ -42,6 +44,7 @@ type SpellingQuestion = {
   id: string;
   prompt: string;
   speechText: string;
+  audioSrc?: string;
   emoji: string;
   translation: string;
   answerText: string;
@@ -82,6 +85,7 @@ const createQuestions = (mode: QuizMode, words: VocabularyWord[]) => {
         id: word.id,
         prompt: word.word,
         speechText: word.speechText ?? word.word,
+        audioSrc: word.audioSrc,
         correctAnswer: word.emoji,
         options: shuffleArray([word.emoji, ...options]),
       };
@@ -95,6 +99,7 @@ const createQuestions = (mode: QuizMode, words: VocabularyWord[]) => {
         id: word.id,
         prompt: word.word,
         speechText: word.speechText ?? word.word,
+        audioSrc: word.audioSrc,
         emoji: word.emoji,
         translation: word.translation,
         answerText,
@@ -111,6 +116,7 @@ const createQuestions = (mode: QuizMode, words: VocabularyWord[]) => {
       id: word.id,
       prompt: word.word,
       speechText: word.speechText ?? word.word,
+      audioSrc: word.audioSrc,
       emoji: word.emoji,
       correctAnswer: word.translation,
       options: shuffleArray([word.translation, ...distractors]),
@@ -323,7 +329,9 @@ export const QuizSection = ({ level, levelLabel, mode, words, highScore, onEarnS
                     onClick={() =>
                       speak({
                         text: currentQuestion.speechText,
+                        audioSrc: currentQuestion.audioSrc,
                         kind: currentQuestion.prompt.includes(" ") ? "phrase" : "word",
+                        rate: currentQuestion.prompt.includes(" ") ? 0.64 : 0.58,
                         source: "quiz",
                         mode: "manual",
                         interrupt: "all",

@@ -166,7 +166,9 @@ export const VocabularySection = ({
             onHearWord={() => {
               speak({
                 text: word.speechText ?? word.word,
+                audioSrc: word.audioSrc,
                 kind: word.word.includes(" ") ? "phrase" : "word",
+                rate: word.word.includes(" ") ? 0.64 : 0.58,
                 source: "vocabulary",
                 mode: "manual",
                 interrupt: "all",
@@ -176,8 +178,9 @@ export const VocabularySection = ({
             onHearExample={() => {
               speak({
                 text: word.exampleSpeechText ?? word.example,
+                audioSrc: word.exampleAudioSrc,
                 kind: "sentence",
-                rate: 0.76,
+                rate: 0.7,
                 source: "vocabulary",
                 mode: "manual",
                 interrupt: "all",

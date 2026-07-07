@@ -4,26 +4,47 @@ import { type MouseEvent, useState } from "react";
 import { motion } from "framer-motion";
 import { RotateCcw, Sparkles, Volume2 } from "lucide-react";
 
-import type { TopicTheme, VocabularyWord } from "@/data/englishData";
+import type { AgeLevel, TopicTheme, VocabularyWord } from "@/data/englishData";
 
 type FlashcardProps = {
   word: VocabularyWord;
   theme: TopicTheme;
+  level: AgeLevel;
   practiceCount: number;
   isLearned: boolean;
   onHearWord: () => void;
   onHearExample: () => void;
 };
 
+const levelCopy: Record<AgeLevel, { helper: string; frontAction: string; backAction: string }> = {
+  explorer: {
+    helper: "Nghe thật rõ, nhìn emoji lớn và nhớ từ đầu tiên nhé.",
+    frontAction: "Xem nghĩa",
+    backAction: "Xem lại",
+  },
+  builder: {
+    helper: "Bấm vào thẻ để lật mặt sau và xem câu ví dụ dễ nhớ nhé.",
+    frontAction: "Lật thẻ",
+    backAction: "Lật lại",
+  },
+  challenger: {
+    helper: "Nghe kỹ, quan sát từ và ví dụ để chuẩn bị cho thử thách chính tả.",
+    frontAction: "Xem ngữ cảnh",
+    backAction: "Quay lại",
+  },
+};
+
 export const Flashcard = ({
   word,
   theme,
+  level,
   practiceCount,
   isLearned,
   onHearWord,
   onHearExample,
 }: FlashcardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  const copy = levelCopy[level];
 
   const stopCardFlip = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -47,10 +68,10 @@ export const Flashcard = ({
           </div>
 
           <div className="my-auto flex flex-col items-center justify-center text-center">
-            <div className="mb-4 text-7xl drop-shadow-sm sm:text-8xl">{word.emoji}</div>
+            <div className={`mb-4 drop-shadow-sm ${level === "explorer" ? "text-8xl sm:text-9xl" : "text-7xl sm:text-8xl"}`}>{word.emoji}</div>
             <h3 className="text-3xl font-extrabold tracking-wide text-slate-800">{word.word}</h3>
             <p className="mt-2 text-base font-semibold text-slate-500">{word.phonetic}</p>
-            <p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">Bấm vào thẻ để lật mặt sau và xem câu ví dụ dễ nhớ nhé.</p>
+            <p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">{copy.helper}</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -74,14 +95,16 @@ export const Flashcard = ({
               className="kid-button border-cyan-600 bg-cyan-300 text-cyan-950"
             >
               <RotateCcw className="h-4 w-4" />
-              Lật thẻ
+              {copy.frontAction}
             </button>
           </div>
         </div>
 
         <div className="backface-hidden rotate-y-180 absolute inset-0 flex h-full flex-col rounded-[2rem] border-4 border-yellow-200 bg-yellow-100 p-5 shadow-[0_18px_0_rgba(250,204,21,0.22)]">
           <div className="flex items-start justify-between gap-3">
-            <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-slate-600">Ví dụ đơn giản</span>
+            <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-slate-600">
+              {level === "challenger" ? "Ngữ cảnh từ" : "Ví dụ đơn giản"}
+            </span>
             <span className={`rounded-full px-3 py-1 text-xs font-bold ${theme.badgeClass}`}>{word.word}</span>
           </div>
 
@@ -118,7 +141,7 @@ export const Flashcard = ({
               className="kid-button border-violet-600 bg-violet-300 text-violet-950"
             >
               <Sparkles className="h-4 w-4" />
-              Lật lại
+              {copy.backAction}
             </button>
           </div>
         </div>

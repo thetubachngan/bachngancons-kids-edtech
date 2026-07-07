@@ -2,42 +2,64 @@
 
 import { BookOpen, BrainCircuit, MessageCircle, Star, Trophy } from "lucide-react";
 
-export type TabKey = "vocabulary" | "conversation" | "quiz";
+import type { AgeLevel, AppTabKey, LevelConfig } from "@/data/englishData";
 
 type NavbarProps = {
-  activeTab: TabKey;
-  onChangeTab: (tab: TabKey) => void;
+  activeLevel: AgeLevel;
+  levels: LevelConfig[];
+  activeTab: AppTabKey;
+  availableTabs: AppTabKey[];
+  onChangeLevel: (level: AgeLevel) => void;
+  onChangeTab: (tab: AppTabKey) => void;
   stars: number;
   learnedWords: number;
   highScore: number;
 };
 
-const tabs = [
+const tabs: Record<
+  AppTabKey,
   {
-    id: "vocabulary" as const,
+    label: string;
+    icon: typeof BookOpen;
+  }
+> = {
+  vocabulary: {
     label: "Từ vựng",
     icon: BookOpen,
   },
-  {
-    id: "conversation" as const,
+  conversation: {
     label: "Hội thoại",
     icon: MessageCircle,
   },
-  {
-    id: "quiz" as const,
-    label: "Quiz",
+  quiz: {
+    label: "Thử thách",
     icon: BrainCircuit,
   },
-];
+};
 
-export const Navbar = ({ activeTab, onChangeTab, stars, learnedWords, highScore }: NavbarProps) => {
+export const Navbar = ({
+  activeLevel,
+  levels,
+  activeTab,
+  availableTabs,
+  onChangeLevel,
+  onChangeTab,
+  stars,
+  learnedWords,
+  highScore,
+}: NavbarProps) => {
+  const selectedLevel = levels.find((level) => level.id === activeLevel) ?? levels[0];
+
   return (
     <header className="section-shell sticky top-0 z-20 mt-4">
       <div className="glass-card flex flex-col gap-4 px-4 py-4 sm:px-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.28em] text-amber-600">Kids English App</p>
-            <h1 className="mt-1 text-2xl font-extrabold text-slate-800 sm:text-3xl">Học tiếng Anh lớp 2 cùng Bee & Cat</h1>
+            <p className="text-sm font-bold uppercase tracking-[0.28em] text-amber-600">Kids English Adventure</p>
+            <h1 className="mt-1 text-2xl font-extrabold text-slate-800 sm:text-3xl">Học tiếng Anh cho bé từ 5 tuổi trở lên cùng Bee & Cat</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {selectedLevel.label} · {selectedLevel.ageRange} · {selectedLevel.shortDescription}
+            </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -56,20 +78,40 @@ export const Navbar = ({ activeTab, onChangeTab, stars, learnedWords, highScore 
           </div>
         </div>
 
-        <nav className="grid gap-3 sm:grid-cols-3">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+        <div className="grid gap-3 md:grid-cols-3">
+          {levels.map((level) => {
+            const isActive = level.id === activeLevel;
 
             return (
               <button
-                key={tab.id}
+                key={level.id}
                 type="button"
-                onClick={() => onChangeTab(tab.id)}
+                onClick={() => onChangeLevel(level.id)}
+                className={isActive ? "tab-button tab-button-active" : "tab-button"}
+              >
+                <div className="text-left">
+                  <div className="font-extrabold">{level.label}</div>
+                  <div className="text-xs font-semibold opacity-75">{level.ageRange}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <nav className={`grid gap-3 ${availableTabs.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+          {availableTabs.map((tab) => {
+            const Icon = tabs[tab].icon;
+            const isActive = activeTab === tab;
+
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => onChangeTab(tab)}
                 className={isActive ? "tab-button tab-button-active" : "tab-button"}
               >
                 <Icon className="h-5 w-5" />
-                {tab.label}
+                {tabs[tab].label}
               </button>
             );
           })}

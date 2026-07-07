@@ -3,10 +3,13 @@
 import { BookMarked, Sparkles, Volume2 } from "lucide-react";
 
 import { Flashcard } from "@/components/Flashcard";
-import type { Topic } from "@/data/englishData";
+import type { AgeLevel, Topic } from "@/data/englishData";
 import { useSpeech } from "@/hooks/useSpeech";
 
 type VocabularySectionProps = {
+  level: AgeLevel;
+  levelLabel: string;
+  vocabularyHint: string;
   topics: Topic[];
   selectedTopicId: string;
   learnedWords: string[];
@@ -15,7 +18,25 @@ type VocabularySectionProps = {
   onPracticeWord: (wordId: string) => void;
 };
 
+const headerCopy: Record<AgeLevel, { title: string; description: string }> = {
+  explorer: {
+    title: "Khám phá từ đầu tiên",
+    description: "Nhìn emoji thật to, nghe phát âm rõ ràng và chọn chủ đề bé thích nhất.",
+  },
+  builder: {
+    title: "Kho từ vựng",
+    description: "Chọn chủ đề yêu thích, nghe phát âm và lật thẻ để ghi nhớ nhanh hơn.",
+  },
+  challenger: {
+    title: "Từ vựng nâng cao",
+    description: "Luyện nghe, đọc ví dụ và chuẩn bị cho thử thách ghép chữ ở cấp độ cao hơn.",
+  },
+};
+
 export const VocabularySection = ({
+  level,
+  levelLabel,
+  vocabularyHint,
   topics,
   selectedTopicId,
   learnedWords,
@@ -26,7 +47,12 @@ export const VocabularySection = ({
   const { canSpeak, isReady, speak, preferredVoice } = useSpeech();
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId) ?? topics[0];
   const learnedSet = new Set(learnedWords);
-  const selectedLearnedCount = selectedTopic.words.filter((word) => learnedSet.has(word.id)).length;
+  const selectedLearnedCount = selectedTopic?.words.filter((word) => learnedSet.has(word.id)).length ?? 0;
+  const copy = headerCopy[level];
+
+  if (!selectedTopic) {
+    return null;
+  }
 
   return (
     <section className="section-shell mt-8 space-y-6">
@@ -37,9 +63,13 @@ export const VocabularySection = ({
               <BookMarked className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-800">Kho từ vựng</h2>
-              <p className="text-sm text-slate-500">Chọn chủ đề yêu thích, nghe phát âm và lật thẻ để ghi nhớ nhanh hơn.</p>
+              <h2 className="text-2xl font-extrabold text-slate-800">{copy.title}</h2>
+              <p className="text-sm text-slate-500">{copy.description}</p>
             </div>
+          </div>
+
+          <div className="mt-4 rounded-[1.5rem] bg-amber-50 p-4 text-sm leading-6 text-slate-600">
+            <span className="font-extrabold text-amber-700">{levelLabel}:</span> {vocabularyHint}
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -85,7 +115,11 @@ export const VocabularySection = ({
                 </div>
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">
-                Bé chỉ cần nghe mỗi từ ít nhất 3 lần là hệ thống sẽ đánh dấu đã thuộc và thưởng sao tự động.
+                {level === "explorer"
+                  ? "Bé chỉ cần nghe thật rõ và nhận ra emoji đúng là đã có thể bắt đầu làm quen tiếng Anh rồi."
+                  : level === "builder"
+                    ? "Bé chỉ cần nghe mỗi từ ít nhất 3 lần là hệ thống sẽ đánh dấu đã thuộc và thưởng sao tự động."
+                    : "Hãy nghe kỹ, đọc ví dụ và chuẩn bị cho phần thử thách ghép chữ ở cấp độ khó hơn nhé."}
               </p>
             </div>
 
@@ -126,12 +160,16 @@ export const VocabularySection = ({
             key={word.id}
             word={word}
             theme={selectedTopic.theme}
+            level={level}
             practiceCount={practiceCounts[word.id] ?? 0}
             isLearned={learnedSet.has(word.id)}
             onHearWord={() => {
               speak({
                 text: word.speechText ?? word.word,
-                kind: "word",
+                kind: word.word.includes(" ") ? "phrase" : "word",
+                source: "vocabulary",
+                mode: "manual",
+                interrupt: "all",
               });
               onPracticeWord(word.id);
             }}
@@ -139,7 +177,10 @@ export const VocabularySection = ({
               speak({
                 text: word.exampleSpeechText ?? word.example,
                 kind: "sentence",
-                rate: 0.78,
+                rate: 0.76,
+                source: "vocabulary",
+                mode: "manual",
+                interrupt: "all",
               });
               onPracticeWord(word.id);
             }}

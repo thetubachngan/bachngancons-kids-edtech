@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, MessageCircleHeart, Play, Square, Volume2 } from "lucide-react";
 
 import { FloatingMascot } from "@/components/FloatingMascot";
-import type { ConversationScenario } from "@/data/englishData";
+import type { AgeLevel, ConversationScenario } from "@/data/englishData";
 import { useSpeech } from "@/hooks/useSpeech";
 
 type ConversationSectionProps = {
+  level: Exclude<AgeLevel, "explorer">;
+  title: string;
+  description: string;
   conversations: ConversationScenario[];
 };
 
@@ -26,19 +29,23 @@ const speakerEmoji: Record<"bee" | "cat", string> = {
   cat: "🐱",
 };
 
-export const ConversationSection = ({ conversations }: ConversationSectionProps) => {
-  const { speak, stop } = useSpeech();
+export const ConversationSection = ({ level, title, description, conversations }: ConversationSectionProps) => {
+  const { createSession, speak, stop } = useSpeech();
   const [activeScenarioId, setActiveScenarioId] = useState(conversations[0]?.id ?? "");
   const [activeLineIndex, setActiveLineIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const sessionIdRef = useRef<number | null>(null);
 
+  const resolvedScenarioId = conversations.some((scenario) => scenario.id === activeScenarioId) ? activeScenarioId : (conversations[0]?.id ?? "");
   const activeScenario = useMemo(
-    () => conversations.find((scenario) => scenario.id === activeScenarioId) ?? conversations[0],
-    [activeScenarioId, conversations],
+    () => conversations.find((scenario) => scenario.id === resolvedScenarioId) ?? conversations[0],
+    [conversations, resolvedScenarioId],
   );
+  const resolvedActiveLineIndex = activeScenario ? Math.min(activeLineIndex, activeScenario.lines.length - 1) : 0;
 
   useEffect(() => {
     return () => {
+      sessionIdRef.current = null;
       stop();
     };
   }, [stop]);
@@ -48,17 +55,32 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
       return;
     }
 
-    const activeLine = activeScenario.lines[activeLineIndex];
+    if (!sessionIdRef.current) {
+      sessionIdRef.current = createSession("conversation");
+    }
+
+    const activeLine = activeScenario.lines[resolvedActiveLineIndex];
     if (!activeLine) {
       return;
     }
 
+    const activeSessionId = sessionIdRef.current;
+
     speak({
       text: activeLine.english,
       kind: "sentence",
-      rate: 0.78,
+      rate: level === "challenger" ? 0.78 : 0.74,
+      source: "conversation",
+      mode: "autoplay",
+      interrupt: "same-source",
+      sessionId: activeSessionId,
       onEnd: () => {
-        if (activeLineIndex >= activeScenario.lines.length - 1) {
+        if (sessionIdRef.current !== activeSessionId) {
+          return;
+        }
+
+        if (resolvedActiveLineIndex >= activeScenario.lines.length - 1) {
+          sessionIdRef.current = null;
           setIsPlaying(false);
           return;
         }
@@ -66,13 +88,13 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
         setActiveLineIndex((current) => current + 1);
       },
     });
-  }, [activeLineIndex, activeScenario, isPlaying, speak]);
+  }, [activeScenario, createSession, isPlaying, level, resolvedActiveLineIndex, speak]);
 
   if (!activeScenario) {
     return null;
   }
 
-  const activeLine = activeScenario.lines[activeLineIndex];
+  const activeLine = activeScenario.lines[resolvedActiveLineIndex];
 
   return (
     <section className="section-shell mt-8 space-y-6">
@@ -83,8 +105,8 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
               <MessageCircleHeart className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-800">Hội thoại cùng Bee & Cat</h2>
-              <p className="text-sm text-slate-500">Bé có thể nghe từng câu hoặc bật tự động để luyện nói theo cả đoạn.</p>
+              <h2 className="text-2xl font-extrabold text-slate-800">{title}</h2>
+              <p className="text-sm text-slate-500">{description}</p>
             </div>
           </div>
 
@@ -97,6 +119,7 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                   key={scenario.id}
                   type="button"
                   onClick={() => {
+                    sessionIdRef.current = null;
                     stop();
                     setActiveScenarioId(scenario.id);
                     setActiveLineIndex(0);
@@ -130,8 +153,8 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                 <p className="mt-1 text-sm text-slate-600">{activeScenario.summary}</p>
               </div>
               <div className="flex items-center gap-4">
-                <FloatingMascot name="Bee" emoji="🐝" speech={"Let's talk!"} className="items-center" />
-                <FloatingMascot name="Cat" emoji="🐱" speech="Meow, say it with me!" className="items-center" />
+                <FloatingMascot name="Bee" emoji="🐝" speech={level === "builder" ? "Let's talk!" : "Ready for a challenge?"} className="items-center" />
+                <FloatingMascot name="Cat" emoji="🐱" speech={level === "builder" ? "Say it with me!" : "Listen and answer!"} className="items-center" />
               </div>
             </div>
 
@@ -140,7 +163,7 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                 <div>
                   <p className="text-sm font-bold uppercase tracking-[0.25em] text-slate-500">Câu hiện tại</p>
                   <h4 className="mt-1 text-xl font-extrabold text-slate-800">
-                    {activeLineIndex + 1}/{activeScenario.lines.length} · {speakerName[activeLine.speaker]}
+                    {resolvedActiveLineIndex + 1}/{activeScenario.lines.length} · {speakerName[activeLine.speaker]}
                   </h4>
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -148,11 +171,13 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                     type="button"
                     onClick={() => {
                       if (isPlaying) {
+                        sessionIdRef.current = null;
                         stop();
                         setIsPlaying(false);
                         return;
                       }
 
+                      sessionIdRef.current = createSession("conversation");
                       setIsPlaying(true);
                     }}
                     className="kid-button border-yellow-600 bg-yellow-300 text-yellow-950"
@@ -163,12 +188,16 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                   <button
                     type="button"
                     onClick={() => {
+                      sessionIdRef.current = null;
                       stop();
                       setIsPlaying(false);
                       speak({
                         text: activeLine.english,
                         kind: "sentence",
-                        rate: 0.78,
+                        rate: level === "challenger" ? 0.78 : 0.74,
+                        source: "conversation",
+                        mode: "manual",
+                        interrupt: "all",
                       });
                     }}
                     className="kid-button border-sky-600 bg-sky-300 text-sky-950"
@@ -194,12 +223,13 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                 <button
                   type="button"
                   onClick={() => {
+                    sessionIdRef.current = null;
                     stop();
                     setIsPlaying(false);
                     setActiveLineIndex((current) => Math.max(current - 1, 0));
                   }}
                   className="kid-button border-violet-600 bg-violet-300 text-violet-950"
-                  disabled={activeLineIndex === 0}
+                  disabled={resolvedActiveLineIndex === 0}
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Câu trước
@@ -207,12 +237,13 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                 <button
                   type="button"
                   onClick={() => {
+                    sessionIdRef.current = null;
                     stop();
                     setIsPlaying(false);
                     setActiveLineIndex((current) => Math.min(current + 1, activeScenario.lines.length - 1));
                   }}
                   className="kid-button border-emerald-600 bg-emerald-300 text-emerald-950"
-                  disabled={activeLineIndex === activeScenario.lines.length - 1}
+                  disabled={resolvedActiveLineIndex === activeScenario.lines.length - 1}
                 >
                   Câu sau
                   <ChevronRight className="h-4 w-4" />
@@ -226,17 +257,21 @@ export const ConversationSection = ({ conversations }: ConversationSectionProps)
                   key={`${line.english}-${index}`}
                   type="button"
                   onClick={() => {
+                    sessionIdRef.current = null;
                     stop();
                     setIsPlaying(false);
                     setActiveLineIndex(index);
                     speak({
                       text: line.english,
                       kind: "sentence",
-                      rate: 0.78,
+                      rate: level === "challenger" ? 0.78 : 0.74,
+                      source: "conversation",
+                      mode: "manual",
+                      interrupt: "all",
                     });
                   }}
                   className={`rounded-[1.4rem] border p-4 text-left transition ${
-                    index === activeLineIndex
+                    index === resolvedActiveLineIndex
                       ? "border-amber-200 bg-white shadow-sm"
                       : "border-white/80 bg-white/60 hover:-translate-y-0.5"
                   }`}

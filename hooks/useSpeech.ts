@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const WORD_RATE = 0.54;
-const PHRASE_RATE = 0.6;
-const SENTENCE_RATE = 0.66;
-const WORD_PITCH = 0.98;
-const PHRASE_PITCH = 1;
-const SENTENCE_PITCH = 1.01;
+const WORD_RATE = 0.48;
+const PHRASE_RATE = 0.54;
+const SENTENCE_RATE = 0.6;
+const WORD_PITCH = 0.96;
+const PHRASE_PITCH = 0.98;
+const SENTENCE_PITCH = 1;
 const RESTART_DELAY_MS = 120;
 const QUALITY_VOICE_PATTERN = /google|microsoft|samantha|jenny|aria|ava|zira|guy|davis/i;
 

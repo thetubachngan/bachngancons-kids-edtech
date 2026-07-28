@@ -331,7 +331,7 @@ export const QuizSection = ({ level, levelLabel, mode, words, highScore, onEarnS
                         text: currentQuestion.speechText,
                         audioSrc: currentQuestion.audioSrc,
                         kind: currentQuestion.prompt.includes(" ") ? "phrase" : "word",
-                        rate: currentQuestion.prompt.includes(" ") ? 0.6 : 0.54,
+                        rate: currentQuestion.prompt.includes(" ") ? 0.54 : 0.48,
                         source: "quiz",
                         mode: "manual",
                         interrupt: "all",

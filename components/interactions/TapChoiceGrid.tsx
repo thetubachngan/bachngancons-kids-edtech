@@ -26,7 +26,7 @@ export const TapChoiceGrid = ({
         const isActive = selectedId === choice.id;
 
         return (
-          <div key={choice.id} className="space-y-2">
+          <div key={choice.id} className="space-y-3">
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={() => onSelect(choice)}
@@ -49,10 +49,12 @@ export const TapChoiceGrid = ({
                 type="button"
                 onClick={() => onPreviewChoice(choice)}
                 disabled={disabled}
-                className="kid-button w-full border-sky-600 bg-sky-200 text-sky-950"
+                className="flex min-h-16 w-full items-center justify-center gap-3 rounded-[1.5rem] border-b-4 border-sky-600 bg-sky-300 px-4 py-3 text-base font-black text-sky-950 shadow-lg transition active:translate-y-[4px] active:border-b-0 sm:min-h-14"
               >
-                <Volume2 className="h-4 w-4" />
-                Nghe từ
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/85 shadow-sm">
+                  <Volume2 className="h-5 w-5" />
+                </div>
+                <span className="leading-none">Nghe từ</span>
               </button>
             ) : null}
           </div>

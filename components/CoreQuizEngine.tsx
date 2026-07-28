@@ -243,9 +243,16 @@ export const CoreQuizEngine = ({
                   <Image src={step.visual.imageSrc} alt={step.visual.title} fill className="object-cover" />
                 </div>
               ) : null}
-              <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-black text-slate-600 shadow-sm">
-                <Volume2 className="h-4 w-4 text-sky-500" />
-                {step.prompt}
+              <div className="flex flex-col items-center gap-3 rounded-[1.25rem] bg-white px-4 py-4 text-center shadow-sm">
+                <div className="flex items-center gap-2 rounded-full bg-sky-50 px-4 py-2 text-sm font-black text-sky-700">
+                  <Volume2 className="h-4 w-4 text-sky-500" />
+                  {step.prompt}
+                </div>
+                {step.type === "tap-match" || step.type === "mcq" ? (
+                  <p className="max-w-md text-sm font-semibold text-slate-500">
+                    Bé hãy bấm nút <span className="font-black text-slate-900">Nghe từ</span> bên dưới từng đáp án để nghe chậm và rõ trước khi chọn.
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>

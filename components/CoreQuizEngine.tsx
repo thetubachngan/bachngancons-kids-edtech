@@ -111,17 +111,21 @@ export const CoreQuizEngine = ({
     }, 320);
   };
 
-  const playChoiceAudio = (choice: LessonChoice, afterSpeak: () => void) => {
+  const playChoiceAudio = (choice: LessonChoice, afterSpeak?: () => void) => {
     const spokenText = choice.hint ?? choice.label;
 
-    speak({
-      text: spokenText,
-      audioSrc: choice.audioSrc,
-      kind: spokenText.includes(" ") ? "phrase" : "word",
-      source: "lesson",
-      mode: "manual",
-      interrupt: "same-source",
-      onEnd: afterSpeak,
+    stop();
+    window.requestAnimationFrame(() => {
+      speak({
+        text: spokenText,
+        audioSrc: choice.audioSrc,
+        kind: spokenText.includes(" ") ? "phrase" : "word",
+        rate: spokenText.includes(" ") ? 0.5 : 0.42,
+        source: "lesson",
+        mode: "manual",
+        interrupt: "all",
+        onEnd: afterSpeak,
+      });
     });
   };
 
@@ -141,7 +145,7 @@ export const CoreQuizEngine = ({
           }}
           onPreviewChoice={(choice) => {
             if (answered) return;
-            playChoiceAudio(choice, () => undefined);
+            playChoiceAudio(choice);
           }}
           disabled={answered || isResolvingChoice}
         />
@@ -156,19 +160,15 @@ export const CoreQuizEngine = ({
           mode="emoji"
           onSelect={(choice) => {
             if (answered || isResolvingChoice) return;
-            setIsResolvingChoice(true);
-            playChoiceAudio(choice, () => {
-              setIsResolvingChoice(false);
-              if (choice.id === currentStep.answerId) {
-                handleCorrect();
-                return;
-              }
-              handleWrong();
-            });
+            if (choice.id === currentStep.answerId) {
+              handleCorrect();
+              return;
+            }
+            handleWrong();
           }}
           onPreviewChoice={(choice) => {
             if (answered) return;
-            playChoiceAudio(choice, () => undefined);
+            playChoiceAudio(choice);
           }}
           disabled={answered || isResolvingChoice}
         />

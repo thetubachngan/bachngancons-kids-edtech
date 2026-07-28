@@ -139,6 +139,10 @@ export const CoreQuizEngine = ({
             }
             handleWrong();
           }}
+          onPreviewChoice={(choice) => {
+            if (answered) return;
+            playChoiceAudio(choice, () => undefined);
+          }}
           disabled={answered || isResolvingChoice}
         />
       );
@@ -161,6 +165,10 @@ export const CoreQuizEngine = ({
               }
               handleWrong();
             });
+          }}
+          onPreviewChoice={(choice) => {
+            if (answered) return;
+            playChoiceAudio(choice, () => undefined);
           }}
           disabled={answered || isResolvingChoice}
         />

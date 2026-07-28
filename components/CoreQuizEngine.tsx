@@ -28,6 +28,7 @@ export const CoreQuizEngine = ({
   const [answered, setAnswered] = useState(false);
   const [feedback, setFeedback] = useState<"idle" | "correct" | "wrong">("idle");
   const [shake, setShake] = useState(false);
+  const [isResolvingChoice, setIsResolvingChoice] = useState(false);
   const wrongTimeoutRef = useRef<number | null>(null);
   const nextTimeoutRef = useRef<number | null>(null);
 
@@ -78,15 +79,17 @@ export const CoreQuizEngine = ({
     setAnswered(false);
     setFeedback("idle");
     setShake(false);
+    setIsResolvingChoice(false);
     setStepIndex((current) => current + 1);
   };
 
   const handleCorrect = async () => {
-    if (answered) return;
+    if (answered || isResolvingChoice) return;
 
     setAnswered(true);
     setFeedback("correct");
     setShake(false);
+    setIsResolvingChoice(true);
     await playFeedbackSound("correct");
 
     nextTimeoutRef.current = window.setTimeout(() => {
@@ -95,15 +98,31 @@ export const CoreQuizEngine = ({
   };
 
   const handleWrong = async () => {
-    if (answered) return;
+    if (answered || isResolvingChoice) return;
 
+    setIsResolvingChoice(true);
     setFeedback("wrong");
     setShake(true);
     await playFeedbackSound("wrong");
     wrongTimeoutRef.current = window.setTimeout(() => {
       setShake(false);
       setFeedback("idle");
+      setIsResolvingChoice(false);
     }, 320);
+  };
+
+  const playChoiceAudio = (choice: LessonChoice, afterSpeak: () => void) => {
+    const spokenText = choice.hint ?? choice.label;
+
+    speak({
+      text: spokenText,
+      audioSrc: choice.audioSrc,
+      kind: spokenText.includes(" ") ? "phrase" : "word",
+      source: "lesson",
+      mode: "manual",
+      interrupt: "same-source",
+      onEnd: afterSpeak,
+    });
   };
 
   const renderStep = (currentStep: LessonStep) => {
@@ -113,14 +132,14 @@ export const CoreQuizEngine = ({
           choices={currentStep.choices}
           selectedId={answered && feedback === "correct" ? currentStep.answerId : null}
           onSelect={(choice: LessonChoice) => {
-            if (answered) return;
+            if (answered || isResolvingChoice) return;
             if (choice.id === currentStep.answerId) {
               handleCorrect();
               return;
             }
             handleWrong();
           }}
-          disabled={answered}
+          disabled={answered || isResolvingChoice}
         />
       );
     }
@@ -132,14 +151,18 @@ export const CoreQuizEngine = ({
           selectedId={answered && feedback === "correct" ? currentStep.answerId : null}
           mode="emoji"
           onSelect={(choice) => {
-            if (answered) return;
-            if (choice.id === currentStep.answerId) {
-              handleCorrect();
-              return;
-            }
-            handleWrong();
+            if (answered || isResolvingChoice) return;
+            setIsResolvingChoice(true);
+            playChoiceAudio(choice, () => {
+              setIsResolvingChoice(false);
+              if (choice.id === currentStep.answerId) {
+                handleCorrect();
+                return;
+              }
+              handleWrong();
+            });
           }}
-          disabled={answered}
+          disabled={answered || isResolvingChoice}
         />
       );
     }
@@ -149,7 +172,7 @@ export const CoreQuizEngine = ({
         <LetterBoard
           answer={currentStep.answer}
           letterBank={currentStep.letterBank}
-          disabled={answered}
+          disabled={answered || isResolvingChoice}
           onComplete={handleCorrect}
           onWrong={handleWrong}
         />
@@ -230,7 +253,13 @@ export const CoreQuizEngine = ({
           </div>
 
           <div className="mb-4 rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
-            {feedback === "correct" ? "Chính xác! Con làm rất tốt." : feedback === "wrong" ? "Chưa đúng, thử lại nhé!" : "Con hãy tập trung vào nhiệm vụ bên trái."}
+            {feedback === "correct"
+              ? "Chính xác! Con làm rất tốt."
+              : feedback === "wrong"
+                ? "Chưa đúng, thử lại nhé!"
+                : step.type === "tap-match"
+                  ? "Bé có thể bấm vào từng icon để nghe phát âm rồi chọn đáp án."
+                  : "Con hãy tập trung vào nhiệm vụ bên trái."}
           </div>
 
           <div className="rounded-[2rem] bg-gradient-to-b from-white to-slate-50 p-3">{renderStep(step)}</div>

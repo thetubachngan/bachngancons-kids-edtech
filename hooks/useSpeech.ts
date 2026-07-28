@@ -8,7 +8,7 @@ const SENTENCE_RATE = 0.58;
 const WORD_PITCH = 0.96;
 const PHRASE_PITCH = 0.98;
 const SENTENCE_PITCH = 1;
-const RESTART_DELAY_MS = 120;
+const RESTART_DELAY_MS = 180;
 const QUALITY_VOICE_PATTERN = /google|microsoft|samantha|jenny|aria|ava|zira|guy|davis/i;
 
 export type SpeechKind = "word" | "phrase" | "sentence";

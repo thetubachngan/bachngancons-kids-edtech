@@ -120,7 +120,7 @@ export const CoreQuizEngine = ({
         text: spokenText,
         audioSrc: choice.audioSrc,
         kind: spokenText.includes(" ") ? "phrase" : "word",
-        rate: spokenText.includes(" ") ? 0.5 : 0.42,
+        rate: spokenText.includes(" ") ? 0.48 : 0.4,
         source: "lesson",
         mode: "manual",
         interrupt: "all",

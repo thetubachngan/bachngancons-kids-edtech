@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const WORD_RATE = 0.58;
-const PHRASE_RATE = 0.64;
-const SENTENCE_RATE = 0.7;
+const WORD_RATE = 0.54;
+const PHRASE_RATE = 0.6;
+const SENTENCE_RATE = 0.66;
 const WORD_PITCH = 0.98;
 const PHRASE_PITCH = 1;
 const SENTENCE_PITCH = 1.01;

@@ -214,6 +214,10 @@ const createWord = (
   emoji,
   example,
   exampleTranslation,
+  speechText: overrides.speechText ?? (word.includes(" ") ? `${word}.` : undefined),
+  exampleSpeechText: overrides.exampleSpeechText,
+  audioSrc: overrides.audioSrc,
+  exampleAudioSrc: overrides.exampleAudioSrc,
   ...overrides,
 });
 

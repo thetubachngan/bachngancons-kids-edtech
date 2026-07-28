@@ -116,6 +116,8 @@ export const useSpeech = () => {
   const pendingTimerRef = useRef<number | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const sessionCounterRef = useRef(0);
+  const voicePrimedRef = useRef(false);
+  const lastSpeechAtRef = useRef(0);
 
   const clearPendingTimer = useCallback(() => {
     if (pendingTimerRef.current !== null) {
@@ -247,13 +249,51 @@ export const useSpeech = () => {
         callback?.();
       };
 
-      const startSpeech = () => {
+      const startSpeech = (skipPrime = false) => {
         if (requestIdRef.current !== requestId) {
           return;
         }
 
         if (speechSynthesis.paused) {
           speechSynthesis.resume();
+        }
+
+        const needsPrime = !skipPrime && (!voicePrimedRef.current || Date.now() - lastSpeechAtRef.current > 12000);
+        if (needsPrime) {
+          const primer = new SpeechSynthesisUtterance(".");
+
+          if (voice) {
+            primer.voice = voice;
+            primer.lang = voice.lang;
+          } else {
+            primer.lang = "en-US";
+          }
+
+          primer.rate = 0.3;
+          primer.pitch = 1;
+          primer.volume = 0.01;
+          primer.onend = () => {
+            if (requestIdRef.current !== requestId) {
+              return;
+            }
+
+            voicePrimedRef.current = true;
+            lastSpeechAtRef.current = Date.now();
+            pendingTimerRef.current = window.setTimeout(() => {
+              startSpeech(true);
+            }, 60);
+          };
+          primer.onerror = () => {
+            if (requestIdRef.current !== requestId) {
+              return;
+            }
+
+            voicePrimedRef.current = true;
+            startSpeech(true);
+          };
+
+          speechSynthesis.speak(primer);
+          return;
         }
 
         const utterance = new SpeechSynthesisUtterance(normalizedText);
@@ -274,6 +314,8 @@ export const useSpeech = () => {
             return;
           }
 
+          voicePrimedRef.current = true;
+          lastSpeechAtRef.current = Date.now();
           setIsSpeaking(true);
           setLastFallbackReason(options.audioSrc ? "audio-fallback-speech" : null);
           options.onStart?.();
@@ -323,6 +365,8 @@ export const useSpeech = () => {
               return;
             }
 
+            voicePrimedRef.current = true;
+            lastSpeechAtRef.current = Date.now();
             setIsSpeaking(true);
             setLastFallbackReason(null);
             options.onStart?.();

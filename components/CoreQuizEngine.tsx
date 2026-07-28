@@ -53,22 +53,10 @@ export const CoreQuizEngine = ({
     if (wrongTimeoutRef.current) window.clearTimeout(wrongTimeoutRef.current);
     if (nextTimeoutRef.current) window.clearTimeout(nextTimeoutRef.current);
 
-    const audioText = "questionAudioText" in step && step.questionAudioText ? step.questionAudioText : step.prompt;
-    const audioSrc = "questionAudioSrc" in step ? step.questionAudioSrc : undefined;
-
-    speak({
-      text: audioText,
-      audioSrc,
-      kind: step.type === "drag-drop" ? "phrase" : "sentence",
-      source: "lesson",
-      mode: "autoplay",
-      interrupt: "all",
-    });
-
     return () => {
       stop();
     };
-  }, [lesson.id, step, speak, stop]);
+  }, [lesson.id, step, stop]);
 
   const goNext = () => {
     if (stepIndex >= lesson.steps.length - 1) {

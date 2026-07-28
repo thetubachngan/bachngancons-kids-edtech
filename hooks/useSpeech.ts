@@ -12,7 +12,7 @@ const RESTART_DELAY_MS = 120;
 const QUALITY_VOICE_PATTERN = /google|microsoft|samantha|jenny|aria|ava|zira|guy|davis/i;
 
 export type SpeechKind = "word" | "phrase" | "sentence";
-export type SpeechSource = "vocabulary" | "conversation" | "quiz";
+export type SpeechSource = "vocabulary" | "conversation" | "quiz" | "lesson";
 export type SpeechMode = "manual" | "autoplay";
 export type InterruptMode = "all" | "same-source" | "none";
 

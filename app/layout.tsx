@@ -10,8 +10,8 @@ const fredoka = Fredoka({
 });
 
 export const metadata: Metadata = {
-  title: "Bee & Cat English Adventure",
-  description: "Ứng dụng học tiếng Anh lớp 2 với flashcards, hội thoại và mini quiz sinh động cho trẻ em.",
+  title: "Kids English Adventure",
+  description: "Nền tảng học tiếng Anh tương tác cho trẻ 5-9 tuổi với Learning Map, gamification và lesson engine.",
 };
 
 export default function RootLayout({

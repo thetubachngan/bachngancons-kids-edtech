@@ -1,12 +1,8 @@
 "use client";
 
-type AudioContextConstructor = typeof AudioContext & {
-  prototype: AudioContext;
-};
-
 declare global {
   interface Window {
-    webkitAudioContext?: AudioContextConstructor;
+    webkitAudioContext?: typeof AudioContext;
   }
 }
 

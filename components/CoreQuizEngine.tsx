@@ -35,17 +35,14 @@ export const CoreQuizEngine = ({
 
   const step = lesson.steps[stepIndex];
   const progress = useMemo(() => (lesson.steps.length ? (stepIndex + 1) / lesson.steps.length : 1), [lesson.steps.length, stepIndex]);
-  const stepAudioSources = useMemo(
+  const lessonAudioSources = useMemo(
     () =>
-      step
-        ? [
-            step.visual.imageSrc,
-            step.visual.audioSrc,
-            "questionAudioSrc" in step ? step.questionAudioSrc : undefined,
-            ...(step.type === "mcq" || step.type === "tap-match" ? step.choices.flatMap((choice) => [choice.audioSrc]) : []),
-          ].filter(Boolean) as string[]
-        : [],
-    [step],
+      lesson.steps.flatMap((lessonStep) => [
+        lessonStep.visual.audioSrc,
+        "questionAudioSrc" in lessonStep ? lessonStep.questionAudioSrc : undefined,
+        ...(lessonStep.type === "mcq" || lessonStep.type === "tap-match" ? lessonStep.choices.flatMap((choice) => [choice.audioSrc]) : []),
+      ]).filter(Boolean) as string[],
+    [lesson.steps],
   );
   const mascotMood: "happy" | "encouraging" | "celebrating" | "oops" =
     feedback === "correct"
@@ -61,8 +58,8 @@ export const CoreQuizEngine = ({
   }, [onProgress, progress]);
 
   useEffect(() => {
-    preloadAudio(stepAudioSources);
-  }, [stepAudioSources]);
+    preloadAudio(lessonAudioSources);
+  }, [lessonAudioSources]);
 
   useEffect(() => {
     stop();

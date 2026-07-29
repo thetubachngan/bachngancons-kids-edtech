@@ -155,7 +155,7 @@ export const VocabularySection = ({
               <Volume2 className="h-4 w-4 text-sky-500" />
               {isReady ? (canSpeak ? "Có thể phát âm trực tiếp" : "Trình duyệt chưa hỗ trợ phát âm") : "Đang kiểm tra hỗ trợ phát âm..."}
             </span>
-            {isReady && preferredVoice ? (
+            {isReady && preferredVoice?.name ? (
               <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold shadow-sm">
                 Giọng đang chọn: {preferredVoice.name}
               </span>

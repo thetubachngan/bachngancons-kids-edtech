@@ -2,16 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getPreloadedAudio } from "@/utils/preloadAudio";
-
-const WORD_RATE = 0.42;
-const PHRASE_RATE = 0.5;
-const SENTENCE_RATE = 0.58;
-const WORD_PITCH = 0.96;
-const PHRASE_PITCH = 0.98;
-const SENTENCE_PITCH = 1;
-const RESTART_DELAY_MS = 180;
-const QUALITY_VOICE_PATTERN = /google|microsoft|samantha|jenny|aria|ava|zira|guy|davis/i;
+import { playBufferedAudio } from "@/utils/preloadAudio";
 
 export type SpeechKind = "word" | "phrase" | "sentence";
 export type SpeechSource = "vocabulary" | "conversation" | "quiz" | "lesson";
@@ -37,121 +28,18 @@ export type StopOptions = {
   sessionId?: number | null;
 };
 
-const normalizeSpeechText = (text: string, kind: SpeechKind) => {
-  const trimmed = text.replace(/\s+/g, " ").trim();
-
-  if (!trimmed) {
-    return "";
-  }
-
-  if (kind === "word" || kind === "phrase") {
-    return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
-  }
-
-  return trimmed;
-};
-
-const scoreVoice = (voice: SpeechSynthesisVoice) => {
-  let score = 0;
-
-  if (voice.lang === "en-US") {
-    score += 100;
-  } else if (voice.lang === "en-GB") {
-    score += 75;
-  } else if (voice.lang.startsWith("en")) {
-    score += 50;
-  }
-
-  if (QUALITY_VOICE_PATTERN.test(voice.name)) {
-    score += 20;
-  }
-
-  if (voice.localService) {
-    score += 5;
-  }
-
-  return score;
-};
-
-const pickPreferredVoice = (availableVoices: SpeechSynthesisVoice[]) => {
-  const englishVoices = availableVoices.filter((voice) => voice.lang.startsWith("en"));
-
-  if (!englishVoices.length) {
-    return null;
-  }
-
-  return [...englishVoices].sort((left, right) => scoreVoice(right) - scoreVoice(left))[0] ?? null;
-};
-
-const getDefaultRate = (kind: SpeechKind) => {
-  if (kind === "word") {
-    return WORD_RATE;
-  }
-
-  if (kind === "phrase") {
-    return PHRASE_RATE;
-  }
-
-  return SENTENCE_RATE;
-};
-
-const getDefaultPitch = (kind: SpeechKind) => {
-  if (kind === "word") {
-    return WORD_PITCH;
-  }
-
-  if (kind === "phrase") {
-    return PHRASE_PITCH;
-  }
-
-  return SENTENCE_PITCH;
+type PlaybackHandle = {
+  stop: () => void;
 };
 
 export const useSpeech = () => {
   const [hydrated, setHydrated] = useState(false);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [preferredVoice, setPreferredVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastFallbackReason, setLastFallbackReason] = useState<string | null>(null);
 
   const requestIdRef = useRef(0);
-  const pendingTimerRef = useRef<number | null>(null);
-  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const sessionCounterRef = useRef(0);
-
-  const clearPendingTimer = useCallback(() => {
-    if (pendingTimerRef.current !== null) {
-      window.clearTimeout(pendingTimerRef.current);
-      pendingTimerRef.current = null;
-    }
-  }, []);
-
-  const stopCurrentAudio = useCallback(() => {
-    if (!currentAudioRef.current) {
-      return;
-    }
-
-    currentAudioRef.current.pause();
-    currentAudioRef.current.currentTime = 0;
-    currentAudioRef.current.onended = null;
-    currentAudioRef.current.onerror = null;
-    currentAudioRef.current = null;
-  }, []);
-
-  const getSpeechSynthesis = useCallback(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      return null;
-    }
-
-    return window.speechSynthesis;
-  }, []);
-
-  const createSession = useCallback((source: SpeechSource) => {
-    void source;
-    sessionCounterRef.current += 1;
-
-    return sessionCounterRef.current;
-  }, []);
+  const currentPlaybackRef = useRef<PlaybackHandle | null>(null);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -163,211 +51,71 @@ export const useSpeech = () => {
     };
   }, []);
 
-  const loadVoices = useCallback(() => {
-    const speechSynthesis = getSpeechSynthesis();
-    if (!speechSynthesis) {
-      return [] as SpeechSynthesisVoice[];
-    }
+  const createSession = useCallback((source: SpeechSource) => {
+    void source;
+    sessionCounterRef.current += 1;
+    return sessionCounterRef.current;
+  }, []);
 
-    const availableVoices = speechSynthesis.getVoices();
-    setVoices(availableVoices);
-    setPreferredVoice(pickPreferredVoice(availableVoices));
+  const stop = useCallback((options?: StopOptions) => {
+    void options;
+    requestIdRef.current += 1;
+    currentPlaybackRef.current?.stop();
+    currentPlaybackRef.current = null;
+    setIsSpeaking(false);
+  }, []);
 
-    return availableVoices;
-  }, [getSpeechSynthesis]);
-
-  useEffect(() => {
-    const speechSynthesis = getSpeechSynthesis();
-    if (!speechSynthesis) {
+  const speak = useCallback((options: SpeakOptions) => {
+    if (!options.audioSrc) {
+      setLastFallbackReason("missing-audio");
       return;
     }
 
-    const frame = window.requestAnimationFrame(() => {
-      loadVoices();
-    });
-    const handleVoicesChanged = () => {
-      loadVoices();
-    };
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
 
-    speechSynthesis.addEventListener("voiceschanged", handleVoicesChanged);
+    currentPlaybackRef.current?.stop();
+    currentPlaybackRef.current = null;
+    setIsSpeaking(false);
+    setLastFallbackReason(null);
 
-    return () => {
-      window.cancelAnimationFrame(frame);
-      speechSynthesis.removeEventListener("voiceschanged", handleVoicesChanged);
-      clearPendingTimer();
-      stopCurrentAudio();
-      speechSynthesis.cancel();
-    };
-  }, [clearPendingTimer, getSpeechSynthesis, loadVoices, stopCurrentAudio]);
-
-  const stop = useCallback(
-    (options?: StopOptions) => {
-      void options;
-      const speechSynthesis = getSpeechSynthesis();
-      if (!speechSynthesis) {
-        return;
-      }
-
-      requestIdRef.current += 1;
-      clearPendingTimer();
-      stopCurrentAudio();
-      setIsSpeaking(false);
-      speechSynthesis.cancel();
-    },
-    [clearPendingTimer, getSpeechSynthesis, stopCurrentAudio],
-  );
-
-  const speak = useCallback(
-    (options: SpeakOptions) => {
-      const speechSynthesis = getSpeechSynthesis();
-      if (!speechSynthesis) {
-        return;
-      }
-
-      const kind = options.kind ?? "sentence";
-      const interrupt = options.interrupt ?? "all";
-      const normalizedText = normalizeSpeechText(options.text, kind);
-
-      if (!normalizedText) {
-        return;
-      }
-
-      const availableVoices = voices.length ? voices : loadVoices();
-      const voice = preferredVoice ?? pickPreferredVoice(availableVoices);
-      const requestId = requestIdRef.current + 1;
-      requestIdRef.current = requestId;
-
-      clearPendingTimer();
-
-      const finalize = (callback?: () => void) => {
+    const playback = playBufferedAudio(options.audioSrc, {
+      onStart: () => {
         if (requestIdRef.current !== requestId) {
           return;
         }
 
-        stopCurrentAudio();
+        setIsSpeaking(true);
+        options.onStart?.();
+      },
+      onEnd: () => {
+        if (requestIdRef.current !== requestId) {
+          return;
+        }
+
+        currentPlaybackRef.current = null;
         setIsSpeaking(false);
-        callback?.();
-      };
-
-      const startSpeech = () => {
+        options.onEnd?.();
+      },
+      onError: () => {
         if (requestIdRef.current !== requestId) {
           return;
         }
 
-        if (speechSynthesis.paused) {
-          speechSynthesis.resume();
-        }
+        currentPlaybackRef.current = null;
+        setIsSpeaking(false);
+        setLastFallbackReason("audio-error");
+      },
+    });
 
-        const utterance = new SpeechSynthesisUtterance(normalizedText);
-
-        if (voice) {
-          utterance.voice = voice;
-          utterance.lang = voice.lang;
-        } else {
-          utterance.lang = "en-US";
-        }
-
-        utterance.rate = options.rate ?? getDefaultRate(kind);
-        utterance.pitch = options.pitch ?? getDefaultPitch(kind);
-        utterance.volume = 1;
-
-        utterance.onstart = () => {
-          if (requestIdRef.current !== requestId) {
-            return;
-          }
-
-          setIsSpeaking(true);
-          setLastFallbackReason(options.audioSrc ? "audio-fallback-speech" : null);
-          options.onStart?.();
-        };
-
-        utterance.onend = () => finalize(options.onEnd);
-        utterance.onerror = () => finalize();
-
-        speechSynthesis.speak(utterance);
-      };
-
-      const tryAudioThenSpeech = () => {
-        if (!options.audioSrc || requestIdRef.current !== requestId) {
-          startSpeech();
-          return;
-        }
-
-        const audio = getPreloadedAudio(options.audioSrc);
-        audio.pause();
-        audio.currentTime = 0;
-        currentAudioRef.current = audio;
-
-        const cleanupAudio = () => {
-          if (currentAudioRef.current === audio) {
-            currentAudioRef.current = null;
-          }
-          audio.onended = null;
-          audio.onerror = null;
-        };
-
-        audio.onended = () => {
-          cleanupAudio();
-          finalize(options.onEnd);
-        };
-
-        audio.onerror = () => {
-          cleanupAudio();
-          setLastFallbackReason("audio-error");
-          startSpeech();
-        };
-
-        audio
-          .play()
-          .then(() => {
-            if (requestIdRef.current !== requestId) {
-              audio.pause();
-              cleanupAudio();
-              return;
-            }
-
-            setIsSpeaking(true);
-            setLastFallbackReason(null);
-            options.onStart?.();
-          })
-          .catch(() => {
-            cleanupAudio();
-            setLastFallbackReason("audio-play-failed");
-            startSpeech();
-          });
-      };
-
-      const hasActivePlayback = speechSynthesis.speaking || speechSynthesis.pending || currentAudioRef.current !== null;
-
-      if (interrupt !== "none" && hasActivePlayback) {
-        stopCurrentAudio();
-        speechSynthesis.cancel();
-
-        if (options.audioSrc) {
-          tryAudioThenSpeech();
-          return;
-        }
-
-        pendingTimerRef.current = window.setTimeout(() => {
-          pendingTimerRef.current = null;
-          tryAudioThenSpeech();
-        }, RESTART_DELAY_MS);
-        return;
-      }
-
-      tryAudioThenSpeech();
-    },
-    [clearPendingTimer, getSpeechSynthesis, loadVoices, preferredVoice, stopCurrentAudio, voices],
-  );
-
-  const canSpeak = hydrated && Boolean(getSpeechSynthesis());
-  const isReady = hydrated;
+    currentPlaybackRef.current = playback;
+  }, []);
 
   return {
-    voices,
-    preferredVoice: isReady ? preferredVoice : null,
-    canSpeak,
-    isReady,
+    voices: [] as SpeechSynthesisVoice[],
+    preferredVoice: null as SpeechSynthesisVoice | null,
+    canSpeak: hydrated,
+    isReady: hydrated,
     isSpeaking,
     lastFallbackReason,
     createSession,

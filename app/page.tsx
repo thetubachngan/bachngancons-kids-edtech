@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Sparkles, Star, Trophy } from "lucide-react";
 
 import { LearningMap } from "@/components/LearningMap";
@@ -10,6 +10,8 @@ import { Mascot } from "@/components/gamification/Mascot";
 import { RewardOverlay } from "@/components/gamification/RewardOverlay";
 import { StreakBanner } from "@/components/gamification/StreakBanner";
 import { curriculum, getLessonById, getNextLessonId } from "@/data/curriculum";
+import { conversationAudioSrcByText, exampleAudioSrcById, wordAudioSrcById } from "@/data/audioManifest";
+import { preloadAudio } from "@/utils/preloadAudio";
 import { LearningStoreProvider, totalLessonCount, useLearningStore } from "@/store/learningStore";
 
 function AppShell() {
@@ -20,6 +22,14 @@ function AppShell() {
   const [rewardStars, setRewardStars] = useState(0);
 
   const activeLesson = useMemo(() => (activeLessonId ? getLessonById(activeLessonId) : null), [activeLessonId]);
+
+  useEffect(() => {
+    preloadAudio([
+      ...Object.values(wordAudioSrcById),
+      ...Object.values(exampleAudioSrcById),
+      ...Object.values(conversationAudioSrcByText),
+    ]);
+  }, []);
 
   const completedLessonCount = state.completedLessonIds.length;
   const unlockedLessonCount = state.unlockedLessonIds.length;

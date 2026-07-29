@@ -7,7 +7,8 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { useSpeech } from "@/hooks/useSpeech";
 import type { Lesson, LessonChoice, LessonStep } from "@/data/learningSchema";
-import { playFeedbackSound } from "@/utils/html5Audio";
+import { playCelebrationMusic, playFeedbackSound } from "@/utils/html5Audio";
+import { triggerStepSuccess } from "@/utils/confetti";
 import { preloadAudio } from "@/utils/preloadAudio";
 import { TapChoiceGrid } from "@/components/interactions/TapChoiceGrid";
 import { LetterBoard } from "@/components/interactions/LetterBoard";
@@ -92,6 +93,8 @@ export const CoreQuizEngine = ({
     setFeedback("correct");
     setShake(false);
     setIsResolvingChoice(true);
+    triggerStepSuccess();
+    void playCelebrationMusic("step");
     await playFeedbackSound("correct");
 
     nextTimeoutRef.current = window.setTimeout(() => {

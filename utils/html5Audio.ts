@@ -1,6 +1,12 @@
 "use client";
 
-import { playErrorSound, playSuccessSound } from "@/utils/soundEffects";
+import {
+  playCelebrationFanfare,
+  playCelebrationStinger,
+  playErrorSound,
+  playSuccessSound,
+  stopCelebrationMusic,
+} from "@/utils/soundEffects";
 
 const playHtml5Audio = async (src: string) => {
   try {
@@ -29,3 +35,14 @@ export const playFeedbackSound = async (kind: "correct" | "wrong") => {
 
   await playErrorSound();
 };
+
+export const playCelebrationMusic = async (type: "step" | "lessonComplete") => {
+  if (type === "lessonComplete") {
+    await playCelebrationFanfare();
+    return;
+  }
+
+  await playCelebrationStinger();
+};
+
+export { stopCelebrationMusic };

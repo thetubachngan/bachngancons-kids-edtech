@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star } from "lucide-react";
+
+import { playCelebrationMusic, stopCelebrationMusic } from "@/utils/html5Audio";
+import { triggerLessonComplete } from "@/utils/confetti";
 
 export const RewardOverlay = ({
   open,
@@ -18,22 +20,16 @@ export const RewardOverlay = ({
 }) => {
   useEffect(() => {
     if (!open) {
+      stopCelebrationMusic();
       return;
     }
 
-    confetti({
-      particleCount: 120,
-      spread: 70,
-      origin: { x: 0.1, y: 0.6 },
-      colors: ["#FCD34D", "#34D399", "#60A5FA", "#F472B6"],
-    });
+    triggerLessonComplete();
+    void playCelebrationMusic("lessonComplete");
 
-    confetti({
-      particleCount: 120,
-      spread: 70,
-      origin: { x: 0.9, y: 0.6 },
-      colors: ["#FCD34D", "#34D399", "#60A5FA", "#F472B6"],
-    });
+    return () => {
+      stopCelebrationMusic();
+    };
   }, [open]);
 
   return (

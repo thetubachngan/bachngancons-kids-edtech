@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const outputRoot = path.join(projectRoot, "public", "audio", "generated");
 const manifestPath = path.join(projectRoot, "data", "audioManifest.ts");
+const audioVersion = process.env.AUDIO_VERSION ?? new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
 
 const slugify = (value: string) =>
   value
@@ -56,8 +57,8 @@ const main = async () => {
       await writeAudioFile(word.word, wordFile);
       await writeAudioFile(word.example, exampleFile);
 
-      wordAudioSrcById[word.id] = `/audio/generated/words/${safeFile(word.id)}.mp3`;
-      exampleAudioSrcById[word.id] = `/audio/generated/examples/${safeFile(word.id)}.mp3`;
+      wordAudioSrcById[word.id] = `/audio/generated/words/${safeFile(word.id)}.mp3?v=${audioVersion}`;
+      exampleAudioSrcById[word.id] = `/audio/generated/examples/${safeFile(word.id)}.mp3?v=${audioVersion}`;
     }
   }
 
@@ -68,12 +69,13 @@ const main = async () => {
       const target = path.join(outputRoot, "conversations", safeFile(scenario.level), fileName);
 
       await writeAudioFile(line.english, target);
-      conversationAudioSrcByText[key] = `/audio/generated/conversations/${safeFile(scenario.level)}/${fileName}`;
+      conversationAudioSrcByText[key] = `/audio/generated/conversations/${safeFile(scenario.level)}/${fileName}?v=${audioVersion}`;
     }
   }
 
   const manifestContent = `const normalize = (value: string) => value.replace(/\\s+/g, " ").trim().toLowerCase();
 
+export const audioVersion = ${JSON.stringify(audioVersion)};
 export const wordAudioSrcById: Record<string, string> = ${JSON.stringify(wordAudioSrcById, null, 2)};
 export const exampleAudioSrcById: Record<string, string> = ${JSON.stringify(exampleAudioSrcById, null, 2)};
 export const conversationAudioSrcByText: Record<string, string> = ${JSON.stringify(conversationAudioSrcByText, null, 2)};

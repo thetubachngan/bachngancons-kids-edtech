@@ -100,7 +100,7 @@ export const CoreQuizEngine = ({
   };
 
   const playChoiceAudio = (choice: LessonChoice, afterSpeak?: () => void) => {
-    const spokenText = choice.hint ?? choice.label;
+    const spokenText = choice.label;
 
     speak({
       text: spokenText,

@@ -165,10 +165,10 @@ export const VocabularySection = ({
             isLearned={learnedSet.has(word.id)}
             onHearWord={() => {
               speak({
-                text: word.speechText ?? word.word,
+                text: word.word,
                 audioSrc: word.audioSrc,
                 kind: word.word.includes(" ") ? "phrase" : "word",
-                rate: word.word.includes(" ") ? 0.5 : 0.42,
+                rate: word.word.includes(" ") ? 0.48 : 0.4,
                 source: "vocabulary",
                 mode: "manual",
                 interrupt: "all",
@@ -177,10 +177,10 @@ export const VocabularySection = ({
             }}
             onHearExample={() => {
               speak({
-                text: word.exampleSpeechText ?? word.example,
+                text: word.example,
                 audioSrc: word.exampleAudioSrc,
                 kind: "sentence",
-                rate: 0.56,
+                rate: 0.5,
                 source: "vocabulary",
                 mode: "manual",
                 interrupt: "all",

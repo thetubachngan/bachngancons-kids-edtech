@@ -53,8 +53,8 @@ const main = async () => {
       const wordFile = path.join(outputRoot, "words", `${safeFile(word.id)}.mp3`);
       const exampleFile = path.join(outputRoot, "examples", `${safeFile(word.id)}.mp3`);
 
-      await writeAudioFile(word.speechText ?? word.word, wordFile);
-      await writeAudioFile(word.exampleSpeechText ?? word.example, exampleFile);
+      await writeAudioFile(word.word, wordFile);
+      await writeAudioFile(word.example, exampleFile);
 
       wordAudioSrcById[word.id] = `/audio/generated/words/${safeFile(word.id)}.mp3`;
       exampleAudioSrcById[word.id] = `/audio/generated/examples/${safeFile(word.id)}.mp3`;

@@ -5,6 +5,8 @@ const config: CapacitorConfig = {
   appName: "BachNganCons Kids English",
   webDir: "out",
   server: {
+    url: "https://tienganh.bachngancons.com",
+    cleartext: true,
     androidScheme: "https",
   },
 };

@@ -102,18 +102,15 @@ export const CoreQuizEngine = ({
   const playChoiceAudio = (choice: LessonChoice, afterSpeak?: () => void) => {
     const spokenText = choice.hint ?? choice.label;
 
-    stop();
-    window.requestAnimationFrame(() => {
-      speak({
-        text: spokenText,
-        audioSrc: choice.audioSrc,
-        kind: spokenText.includes(" ") ? "phrase" : "word",
-        rate: spokenText.includes(" ") ? 0.48 : 0.4,
-        source: "lesson",
-        mode: "manual",
-        interrupt: "all",
-        onEnd: afterSpeak,
-      });
+    speak({
+      text: spokenText,
+      audioSrc: choice.audioSrc,
+      kind: spokenText.includes(" ") ? "phrase" : "word",
+      rate: spokenText.includes(" ") ? 0.48 : 0.4,
+      source: "lesson",
+      mode: "manual",
+      interrupt: "all",
+      onEnd: afterSpeak,
     });
   };
 

@@ -43,7 +43,8 @@ const normalizeSpeechText = (text: string, kind: SpeechKind) => {
   }
 
   if (kind === "word" || kind === "phrase") {
-    return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+    const withEnding = /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+    return `, ${withEnding}`;
   }
 
   return trimmed;

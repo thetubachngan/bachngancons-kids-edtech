@@ -101,17 +101,17 @@ function AppShell() {
         <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
           <section className="rounded-[2rem] bg-white/80 p-5 shadow-xl backdrop-blur-sm sm:p-6">
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-              <div>
+              <div className="space-y-4">
                 <p className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-700">
                   <Sparkles className="h-4 w-4" />
-                  One screen, one task
+                  Bee & Cat English
                 </p>
-                <h1 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">Learning Path cho bé 5-9 tuổi</h1>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                  Hành trình học tiếng Anh được game hóa theo kiểu Duolingo ABC / Lingokids: bản đồ học tập, bài học tập trung, nhiệm vụ nghe - nhìn - chạm - nói và hệ thống thưởng sao/streak.
+                <h1 className="text-3xl font-black leading-tight sm:text-5xl">Học tiếng Anh cùng Bee & Cat</h1>
+                <p className="max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
+                  Chọn một bài học trên bản đồ, bấm nghe từ và để bé học theo từng bước thật rõ ràng, vui nhộn.
                 </p>
 
-                <div className="mt-6 flex flex-wrap gap-3">
+                <div className="grid gap-3 sm:flex sm:flex-wrap">
                   <div className="stat-chip bg-yellow-200 text-yellow-950">
                     <Star className="h-4 w-4" />
                     {state.stars} sao

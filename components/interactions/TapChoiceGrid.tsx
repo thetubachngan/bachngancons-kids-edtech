@@ -21,45 +21,67 @@ export const TapChoiceGrid = ({
   mode?: "label" | "emoji";
 }) => {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 w-full max-w-md mx-auto">
       {choices.map((choice) => {
         const isActive = selectedId === choice.id;
 
+        const handleTapCard = () => {
+          if (disabled) return;
+          if (onPreviewChoice) {
+            onPreviewChoice(choice);
+          }
+          onSelect(choice);
+        };
+
+        const handleSpeakerOnly = (e: React.MouseEvent) => {
+          e.stopPropagation();
+          if (disabled) return;
+          if (onPreviewChoice) {
+            onPreviewChoice(choice);
+          }
+        };
+
         return (
-          <div key={choice.id} className="space-y-3">
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={() => onSelect(choice)}
-              disabled={disabled}
-              className={`w-full rounded-[1.75rem] border-2 bg-white p-4 text-center shadow-lg transition ${
-                isActive ? "border-yellow-400 ring-4 ring-yellow-100" : "border-slate-200"
-              } ${disabled ? "opacity-80" : "hover:-translate-y-1"}`}
-            >
-              <div className="flex min-h-24 items-center justify-center">
-                {mode === "emoji" ? (
-                  <div className="text-5xl">{choice.emoji ?? "🎯"}</div>
-                ) : (
-                  <div className="text-2xl font-black text-slate-900">{choice.label}</div>
-                )}
-              </div>
-              {mode === "label" ? <div className="mt-2 text-sm font-bold text-slate-500">{choice.hint ?? choice.emoji ?? ""}</div> : null}
-            </motion.button>
+          <motion.div
+            key={choice.id}
+            whileTap={{ scale: 0.96 }}
+            onClick={handleTapCard}
+            className={`relative flex flex-col items-center justify-center min-h-[96px] sm:min-h-[110px] w-full cursor-pointer rounded-2xl border-2 border-b-4 p-3 text-center transition select-none ${
+              isActive
+                ? "border-amber-400 bg-amber-50 ring-4 ring-amber-200/60 border-b-amber-500"
+                : "border-slate-200 bg-white hover:bg-slate-50 border-b-slate-300 active:border-b-2 active:translate-y-[2px]"
+            } ${disabled ? "opacity-75 pointer-events-none" : ""}`}
+          >
+            {/* Small Audio Speaker Icon on Top Right */}
             {onPreviewChoice ? (
               <button
                 type="button"
-                onClick={() => onPreviewChoice(choice)}
-                disabled={disabled}
-                className="flex min-h-16 w-full items-center justify-center gap-3 rounded-[1.5rem] border-b-4 border-sky-600 bg-sky-300 px-4 py-3 text-base font-black text-sky-950 shadow-lg transition active:translate-y-[4px] active:border-b-0 sm:min-h-14"
+                onClick={handleSpeakerOnly}
+                className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700 shadow-sm transition active:scale-90"
+                aria-label={`Nghe phát âm ${choice.label}`}
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/85 shadow-sm">
-                  <Volume2 className="h-5 w-5" />
-                </div>
-                <span className="leading-none">Nghe từ</span>
+                <Volume2 className="h-4 w-4" />
               </button>
             ) : null}
-          </div>
+
+            {/* Visual Choice Content */}
+            <div className="flex flex-col items-center justify-center gap-1 my-auto">
+              {mode === "emoji" ? (
+                <div className="text-4xl sm:text-5xl drop-shadow-sm">{choice.emoji ?? "🎯"}</div>
+              ) : (
+                <div className="text-xl sm:text-2xl font-black text-slate-800 leading-tight">{choice.label}</div>
+              )}
+              
+              {choice.hint || (mode === "emoji" && choice.label) ? (
+                <div className="text-xs font-bold text-slate-500 mt-0.5">
+                  {choice.hint ?? choice.label}
+                </div>
+              ) : null}
+            </div>
+          </motion.div>
         );
       })}
     </div>
   );
 };
+

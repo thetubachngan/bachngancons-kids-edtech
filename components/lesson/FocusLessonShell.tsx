@@ -1,46 +1,59 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { X, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const FocusLessonShell = ({
   title,
-  subtitle,
+  stars = 0,
   progress,
   onExit,
   children,
 }: {
   title: string;
-  subtitle: string;
+  subtitle?: string;
+  stars?: number;
   progress: number;
   onExit: () => void;
   children: React.ReactNode;
 }) => {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#fffaf0]">
-      <div className="border-b border-white/70 bg-white/85 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-5xl items-center gap-4 px-4 py-4 sm:px-6">
-          <button type="button" onClick={onExit} className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-black uppercase tracking-[0.28em] text-slate-500">One screen, one task</p>
-            <h1 className="truncate text-xl font-black text-slate-900 sm:text-2xl">{title}</h1>
-            <p className="truncate text-sm text-slate-600">{subtitle}</p>
-          </div>
-          <div className="text-sm font-black text-slate-500">{Math.round(progress * 100)}%</div>
-        </div>
-        <div className="mx-auto max-w-5xl px-4 pb-4 sm:px-6">
-          <div className="h-3 overflow-hidden rounded-full bg-slate-200">
+    <div className="fixed inset-0 z-50 flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffaf0] select-none">
+      {/* Top Bar - Clean & Compact Mobile Header */}
+      <header className="flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b border-amber-200/60 bg-white/90 px-4 backdrop-blur-md">
+        <button
+          type="button"
+          onClick={onExit}
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition active:scale-95 hover:bg-slate-200"
+          aria-label="Thoát bài học"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {/* Progress Bar Container */}
+        <div className="flex flex-1 items-center gap-2">
+          <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100 p-0.5 shadow-inner">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-sky-400 to-yellow-400"
-              initial={{ width: 0 }}
+              className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-sky-400 to-amber-400 shadow-sm"
+              initial={{ width: "5%" }}
               animate={{ width: `${Math.max(progress, 0.05) * 100}%` }}
+              transition={{ type: "spring", stiffness: 120, damping: 15 }}
             />
           </div>
         </div>
-      </div>
-      <div className="flex-1 overflow-auto">{children}</div>
+
+        {/* Star Badge */}
+        <div className="flex items-center gap-1.5 rounded-full bg-amber-100/90 px-3 py-1 text-sm font-black text-amber-700 shadow-sm">
+          <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
+          <span>+{stars}★</span>
+        </div>
+      </header>
+
+      {/* Main Content Viewport */}
+      <main className="relative flex flex-1 flex-col overflow-hidden">
+        {children}
+      </main>
     </div>
   );
 };
+

@@ -87,9 +87,9 @@ export const LetterBoard = ({
   }, [disabled]);
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-[2rem] bg-white p-5 shadow-xl">
-        <div className="mb-4 text-center text-sm font-black uppercase tracking-[0.25em] text-slate-500">Kéo thả chữ cái để tạo thành từ</div>
+    <div className="space-y-4 w-full max-w-md mx-auto select-none">
+      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-md text-center">
+        <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-slate-400">Bấm hoặc kéo chữ cái vào ô</p>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {Array.from(normalizedAnswer).map((_, index) => (
             <div
@@ -101,23 +101,24 @@ export const LetterBoard = ({
                 placeLetter(letter, index);
               }}
               onClick={() => activeLetter && placeLetter(activeLetter, index)}
-              className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 text-2xl font-black text-slate-900"
+              className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/50 text-xl font-black text-slate-800 shadow-inner cursor-pointer"
             >
               {slots[index] || ""}
             </div>
           ))}
         </div>
-        <div className="mt-4 flex justify-center gap-3">
-          <button type="button" onClick={removeLast} className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700">
+
+        <div className="mt-3 flex justify-center gap-2">
+          <button type="button" onClick={removeLast} className="rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600 transition active:scale-95">
             Xóa ký tự cuối
           </button>
-          <button type="button" onClick={reset} className="rounded-2xl bg-pink-100 px-4 py-2 text-sm font-bold text-pink-700">
+          <button type="button" onClick={reset} className="rounded-xl bg-pink-100 px-3 py-1.5 text-xs font-bold text-pink-700 transition active:scale-95">
             Làm lại
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
         {letterBank.map((letter, index) => (
           <button
             key={`${letter}-${index}`}
@@ -128,13 +129,12 @@ export const LetterBoard = ({
             }}
             onDragEnd={() => setActiveLetter(null)}
             onClick={() => placeLetter(letter)}
-            className="rounded-2xl bg-white px-4 py-4 text-center text-2xl font-black shadow-md transition active:scale-[0.97]"
+            className="flex h-12 items-center justify-center rounded-xl border-2 border-b-4 border-slate-200 bg-white text-xl font-black text-slate-800 shadow-sm transition active:translate-y-[2px] active:border-b-2"
           >
             {letter}
           </button>
         ))}
       </div>
-      <p className="text-center text-sm font-semibold text-slate-500">Bé có thể kéo hoặc bấm từng chữ cái.</p>
     </div>
   );
 };

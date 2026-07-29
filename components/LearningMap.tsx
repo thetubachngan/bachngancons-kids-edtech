@@ -1,16 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Lock, Star, BookOpen } from "lucide-react";
+import { Lock, Star, Play, Check } from "lucide-react";
 
 import type { Curriculum } from "@/data/learningSchema";
 import { getNodeState } from "@/store/learningStore";
-
-const stateStyles = {
-  locked: "border-slate-200 bg-slate-100 opacity-75",
-  current: "border-yellow-300 bg-yellow-50 shadow-lg shadow-yellow-200/40",
-  completed: "border-emerald-300 bg-emerald-50",
-} as const;
 
 export const LearningMap = ({
   curriculum,
@@ -26,78 +20,83 @@ export const LearningMap = ({
   onStartLesson: (lessonId: string) => void;
 }) => {
   return (
-    <div className="h-[calc(100vh-2rem)] overflow-auto rounded-[2rem] bg-gradient-to-b from-amber-50 via-pink-50 to-sky-50 p-4 sm:p-6">
-      <div className="mx-auto flex max-w-5xl flex-col gap-8 pb-24">
-        {curriculum.units.map((unit) => (
-          <section key={unit.id} className="relative rounded-[2rem] bg-white/60 p-4 shadow-sm backdrop-blur-sm sm:p-6">
-            <div className="mb-6 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.28em] text-slate-500">Level {unit.level}</p>
-                <h2 className="text-3xl font-black text-slate-900">{unit.title}</h2>
-                <p className="mt-1 max-w-2xl text-sm text-slate-600">{unit.description}</p>
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm">
-                <BookOpen className="h-4 w-4 text-emerald-500" />
-                {unit.lessons.length} lessons
-              </div>
-            </div>
+    <div className="w-full max-w-lg mx-auto pb-24 px-4 select-none">
+      {curriculum.units.map((unit) => (
+        <section key={unit.id} className="mb-10 flex flex-col items-center">
+          {/* Unit Header Banner */}
+          <div className="mb-8 w-full rounded-3xl border-2 border-b-4 border-amber-300 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 p-4 text-center text-white shadow-lg">
+            <span className="inline-block rounded-full bg-white/30 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-950">
+              Level {unit.level}
+            </span>
+            <h2 className="mt-1 text-2xl font-black drop-shadow-sm text-slate-900">{unit.title}</h2>
+            <p className="mt-0.5 text-xs font-bold text-amber-950/80">{unit.description}</p>
+          </div>
 
-            <div className="relative pl-8">
-              <div className="absolute left-6 top-0 h-full w-0.5 bg-gradient-to-b from-yellow-300 via-pink-300 to-sky-300" />
-              <div className="flex flex-col gap-4">
-                {unit.lessons.map((lesson, index) => {
-                  const nodeState = getNodeState(lesson.id, unlockedLessonIds, completedLessonIds, currentLessonId);
-                  const isClickable = nodeState !== "locked";
+          {/* Snake Path Container */}
+          <div className="relative flex w-full flex-col items-center gap-8 py-2">
+            {unit.lessons.map((lesson, index) => {
+              const nodeState = getNodeState(lesson.id, unlockedLessonIds, completedLessonIds, currentLessonId);
+              const isClickable = nodeState !== "locked";
 
-                  return (
-                    <motion.button
-                      key={lesson.id}
-                      whileTap={{ scale: 0.99 }}
-                      animate={nodeState === "current" ? { scale: [1, 1.02, 1] } : { scale: 1 }}
-                      transition={{ repeat: nodeState === "current" ? Infinity : 0, duration: 1.15 }}
-                      onClick={() => isClickable && onStartLesson(lesson.id)}
-                      className={`relative rounded-[1.8rem] border-2 p-4 text-left transition ${stateStyles[nodeState]}`}
-                    >
-                      <div className="absolute -left-11 top-6 flex h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-white shadow-sm">
-                        {nodeState === "completed" ? (
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-500" />
-                        ) : nodeState === "current" ? (
-                          <div className="h-3 w-3 rounded-full bg-yellow-500" />
-                        ) : (
-                          <Lock className="h-4 w-4 text-slate-400" />
-                        )}
+              // Stagger offsets for snake path: [0, 48, 0, -48]
+              const offsetPattern = [0, 48, 0, -48];
+              const offsetX = offsetPattern[index % offsetPattern.length];
+
+              return (
+                <div
+                  key={lesson.id}
+                  className="flex flex-col items-center"
+                  style={{ transform: `translateX(${offsetX}px)` }}
+                >
+                  {/* 3D Circular Lesson Button Node */}
+                  <motion.button
+                    whileTap={{ scale: isClickable ? 0.92 : 1 }}
+                    animate={nodeState === "current" ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                    transition={{ repeat: nodeState === "current" ? Infinity : 0, duration: 1.5 }}
+                    onClick={() => isClickable && onStartLesson(lesson.id)}
+                    disabled={!isClickable}
+                    className={`relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full border-4 border-b-8 shadow-xl transition-transform ${
+                      nodeState === "completed"
+                        ? "border-emerald-400 border-b-emerald-600 bg-emerald-500 text-white"
+                        : nodeState === "current"
+                          ? "border-amber-300 border-b-amber-500 bg-amber-400 text-slate-900 ring-8 ring-amber-200/70"
+                          : "border-slate-300 border-b-slate-400 bg-slate-200 text-slate-400 cursor-not-allowed"
+                    }`}
+                  >
+                    {nodeState === "completed" ? (
+                      <Check className="h-10 w-10 stroke-[3]" />
+                    ) : nodeState === "current" ? (
+                      <Play className="h-10 w-10 fill-slate-900 stroke-none ml-1" />
+                    ) : (
+                      <Lock className="h-8 w-8 stroke-[2.5]" />
+                    )}
+
+                    {/* Stars Earned Badge */}
+                    {nodeState === "completed" ? (
+                      <div className="absolute -bottom-2 flex items-center gap-0.5 rounded-full bg-amber-300 px-2 py-0.5 shadow-md">
+                        {Array.from({ length: 3 }).map((_, sIdx) => (
+                          <Star key={sIdx} className="h-3.5 w-3.5 fill-amber-600 text-amber-700" />
+                        ))}
                       </div>
-
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">{lesson.skill}</p>
-                          <h3 className="text-2xl font-black text-slate-900">{lesson.title}</h3>
-                          <p className="mt-1 text-sm text-slate-600">{lesson.description}</p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {nodeState === "completed" ? (
-                            Array.from({ length: 3 }).map((_, starIndex) => (
-                              <Star key={starIndex} className="h-5 w-5 fill-yellow-400 text-yellow-500" />
-                            ))
-                          ) : (
-                            <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-700">+{lesson.rewardStars}★</span>
-                          )}
-                        </div>
+                    ) : (
+                      <div className="absolute -bottom-2 rounded-full bg-white px-2 py-0.5 text-[10px] font-black text-slate-700 shadow-sm border border-slate-200">
+                        +{lesson.rewardStars}★
                       </div>
+                    )}
+                  </motion.button>
 
-                      <div className="mt-4 flex items-center justify-between text-xs font-bold text-slate-500">
-                        <span>{index + 1}. lesson</span>
-                        <span>{lesson.steps.length} tasks</span>
-                      </div>
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        ))}
-      </div>
+                  {/* Lesson Label */}
+                  <div className="mt-3 text-center">
+                    <p className="text-xs font-extrabold text-slate-800">{lesson.title}</p>
+                    <p className="text-[11px] font-semibold text-slate-500">{lesson.skill}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 };
+

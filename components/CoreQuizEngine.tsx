@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Star, Volume2, X } from "lucide-react";
+import { CheckCircle2, Volume2, XCircle } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { useSpeech } from "@/hooks/useSpeech";
 import type { Lesson, LessonChoice, LessonStep } from "@/data/learningSchema";
@@ -16,7 +17,6 @@ import { Mascot } from "@/components/gamification/Mascot";
 export const CoreQuizEngine = ({
   lesson,
   onCompleteLesson,
-  onExit,
   onProgress,
 }: {
   lesson: Lesson;
@@ -35,6 +35,7 @@ export const CoreQuizEngine = ({
 
   const step = lesson.steps[stepIndex];
   const progress = useMemo(() => (lesson.steps.length ? (stepIndex + 1) / lesson.steps.length : 1), [lesson.steps.length, stepIndex]);
+
   const lessonAudioSources = useMemo(
     () =>
       lesson.steps.flatMap((lessonStep) => [
@@ -44,6 +45,7 @@ export const CoreQuizEngine = ({
       ]).filter(Boolean) as string[],
     [lesson.steps],
   );
+
   const mascotMood: "happy" | "encouraging" | "celebrating" | "oops" =
     feedback === "correct"
       ? "happy"
@@ -63,10 +65,8 @@ export const CoreQuizEngine = ({
 
   useEffect(() => {
     stop();
-
     if (wrongTimeoutRef.current) window.clearTimeout(wrongTimeoutRef.current);
     if (nextTimeoutRef.current) window.clearTimeout(nextTimeoutRef.current);
-
     return () => {
       stop();
     };
@@ -96,7 +96,7 @@ export const CoreQuizEngine = ({
 
     nextTimeoutRef.current = window.setTimeout(() => {
       goNext();
-    }, 420);
+    }, 750);
   };
 
   const handleWrong = async () => {
@@ -110,7 +110,7 @@ export const CoreQuizEngine = ({
       setShake(false);
       setFeedback("idle");
       setIsResolvingChoice(false);
-    }, 320);
+    }, 650);
   };
 
   const playChoiceAudio = (choice: LessonChoice, afterSpeak?: () => void) => {
@@ -125,6 +125,20 @@ export const CoreQuizEngine = ({
       mode: "manual",
       interrupt: "all",
       onEnd: afterSpeak,
+    });
+  };
+
+  const playQuestionAudio = () => {
+    if (!step) return;
+    const audioSrc = "questionAudioSrc" in step ? step.questionAudioSrc : step.visual.audioSrc;
+    speak({
+      text: step.prompt,
+      audioSrc: audioSrc,
+      kind: "phrase",
+      rate: 0.48,
+      source: "lesson",
+      mode: "manual",
+      interrupt: "all",
     });
   };
 
@@ -200,90 +214,101 @@ export const CoreQuizEngine = ({
   }
 
   return (
-    <div className={`mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 ${shake ? "animate-[shake_0.3s_ease-in-out_1]" : ""}`}>
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.28em] text-slate-500">Core Quiz Engine</p>
-          <h2 className="mt-1 text-3xl font-black text-slate-900">{lesson.title}</h2>
-          <p className="mt-1 text-sm text-slate-600">{lesson.subtitle}</p>
+    <div className="relative flex h-full w-full max-w-lg mx-auto flex-col justify-between p-4 overflow-hidden select-none">
+      {/* Question Hero & Mascot Header Card */}
+      <div className={`flex flex-col items-center gap-3 transition-transform ${shake ? "animate-[shake_0.3s_ease-in-out_1]" : ""}`}>
+        {/* Mascot + Speech Bubble */}
+        <div className="flex items-center gap-3 w-full justify-center">
+          <div className="shrink-0 scale-90 sm:scale-100">
+            <Mascot mood={mascotMood} />
+          </div>
+          
+          {/* Prompt Bubble */}
+          <div className="relative flex-1 rounded-2xl border-2 border-amber-200 bg-white p-3.5 shadow-md">
+            <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 h-0 w-0 border-y-8 border-r-8 border-y-transparent border-r-white" />
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-base sm:text-lg font-black text-slate-800 leading-snug">{step.prompt}</p>
+              <button
+                type="button"
+                onClick={playQuestionAudio}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 shadow-sm transition active:scale-95"
+                aria-label="Nghe câu hỏi"
+              >
+                <Volume2 className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={onExit}
-          className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 shadow-sm"
-        >
-          <X className="h-5 w-5" />
-        </button>
+
+        {/* Visual Hero Box (Emoji or Image) */}
+        <div className="flex w-full flex-col items-center justify-center rounded-2xl border border-amber-100 bg-gradient-to-b from-amber-50/70 to-pink-50/50 p-4 shadow-sm">
+          {step.visual.imageSrc ? (
+            <div className="relative h-36 sm:h-44 w-full overflow-hidden rounded-xl shadow-inner">
+              <Image src={step.visual.imageSrc} alt={step.visual.title} fill className="object-cover" />
+            </div>
+          ) : (
+            <div className="text-6xl sm:text-7xl my-1 drop-shadow-md animate-bounce-short">
+              {step.visual.emoji ?? "🎯"}
+            </div>
+          )}
+
+          {step.visual.title ? (
+            <h3 className="mt-1 text-xl sm:text-2xl font-black text-slate-800">{step.visual.title}</h3>
+          ) : null}
+          {step.visual.subtitle ? (
+            <p className="text-xs font-semibold text-slate-500">{step.visual.subtitle}</p>
+          ) : null}
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.08fr]">
-        <div className="rounded-[2rem] bg-white p-5 shadow-xl sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-black uppercase tracking-[0.28em] text-emerald-600">{step.skill}</p>
-              <h3 className="mt-1 text-2xl font-black text-slate-900">Một màn hình, một nhiệm vụ</h3>
-            </div>
-            <div className="rounded-full bg-yellow-100 px-3 py-2 text-sm font-black text-yellow-700">
-              Step {stepIndex + 1}/{lesson.steps.length}
-            </div>
-          </div>
+      {/* Answer Choice Interaction Area */}
+      <div className="my-auto w-full pt-2">
+        {renderStep(step)}
+      </div>
 
-          <div className="mb-4 h-3 overflow-hidden rounded-full bg-slate-200">
-            <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-sky-400 to-yellow-400" style={{ width: `${progress * 100}%` }} />
-          </div>
-
-          <div className="rounded-[2rem] bg-gradient-to-br from-amber-50 via-pink-50 to-sky-50 p-4">
-            <div className="flex flex-col items-center gap-4 text-center">
-              <div className="text-7xl sm:text-8xl">{step.visual.emoji ?? "🎯"}</div>
-              <h4 className="text-3xl font-black text-slate-900">{step.visual.title}</h4>
-              {step.visual.subtitle ? <p className="max-w-md text-sm font-semibold text-slate-600">{step.visual.subtitle}</p> : null}
-              {step.visual.imageSrc ? (
-                <div className="relative h-52 w-full overflow-hidden rounded-[1.5rem] shadow-md">
-                  <Image src={step.visual.imageSrc} alt={step.visual.title} fill className="object-cover" />
-                </div>
-              ) : null}
-              <div className="flex flex-col items-center gap-3 rounded-[1.25rem] bg-white px-4 py-4 text-center shadow-sm">
-                <div className="flex items-center gap-2 rounded-full bg-sky-50 px-4 py-2 text-sm font-black text-sky-700">
-                  <Volume2 className="h-4 w-4 text-sky-500" />
-                  {step.prompt}
-                </div>
-                {step.type === "tap-match" || step.type === "mcq" ? (
-                  <p className="max-w-md text-sm font-semibold text-slate-500">
-                    Bé hãy bấm nút <span className="font-black text-slate-900">Nghe từ</span> bên dưới từng đáp án để nghe đúng từ tiếng Anh của icon trước khi chọn.
-                  </p>
-                ) : null}
+      {/* Bottom Sheet Feedback Overlay */}
+      <AnimatePresence>
+        {feedback !== "idle" ? (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className={`absolute bottom-0 left-0 right-0 z-50 flex items-center justify-between rounded-t-3xl border-t-4 p-4 shadow-2xl ${
+              feedback === "correct"
+                ? "border-emerald-500 bg-emerald-100 text-emerald-950"
+                : "border-rose-500 bg-rose-100 text-rose-950"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              {feedback === "correct" ? (
+                <CheckCircle2 className="h-8 w-8 text-emerald-600 shrink-0" />
+              ) : (
+                <XCircle className="h-8 w-8 text-rose-600 shrink-0" />
+              )}
+              <div>
+                <p className="text-lg font-black leading-tight">
+                  {feedback === "correct" ? "Chính xác! Giỏi quá!" : "Chưa đúng rồi!"}
+                </p>
+                <p className="text-xs font-semibold opacity-90">
+                  {feedback === "correct" ? "Bé nhận được +10 sao ⭐" : "Bé hãy thử chọn lại xem nhé!"}
+                </p>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div className="rounded-[2rem] bg-white p-5 shadow-xl sm:p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <Mascot mood={mascotMood} />
-            <div className="flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-emerald-700">
-              <Star className="h-4 w-4 fill-emerald-400 text-emerald-500" />
-              +{lesson.rewardStars}★
-            </div>
-          </div>
-
-          <div className="mb-4 rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
-            {feedback === "correct"
-              ? "Chính xác! Con làm rất tốt."
-              : feedback === "wrong"
-                ? "Chưa đúng, thử lại nhé!"
-                : step.type === "tap-match"
-                  ? "Bé có thể bấm vào từng icon để nghe phát âm rồi chọn đáp án."
-                  : "Con hãy tập trung vào nhiệm vụ bên trái."}
-          </div>
-
-          <div className="rounded-[2rem] bg-gradient-to-b from-white to-slate-50 p-3">{renderStep(step)}</div>
-        </div>
-      </div>
-
-      <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-slate-400">
-        <CheckCircle2 className="h-4 w-4" />
-        Hear • See • Touch • Speak
-      </div>
+            <button
+              type="button"
+              onClick={goNext}
+              className={`rounded-2xl border-b-4 px-5 py-2.5 text-sm font-black text-white shadow-md transition active:translate-y-[2px] active:border-b-0 ${
+                feedback === "correct" ? "border-emerald-700 bg-emerald-500" : "border-rose-700 bg-rose-500"
+              }`}
+            >
+              Tiếp tục
+            </button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 };
+

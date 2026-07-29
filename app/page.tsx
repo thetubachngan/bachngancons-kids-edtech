@@ -148,31 +148,14 @@ function AppShell() {
           />
         </main>
       ) : (
-        <FocusLessonShell title={activeLesson.title} subtitle={activeLesson.description} progress={lessonProgress} onExit={exitLesson}>
-          <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[1.5rem] bg-white/80 p-4 shadow-sm">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">Lesson</p>
-                <p className="mt-2 text-2xl font-black text-slate-900">{activeLesson.title}</p>
-              </div>
-              <div className="rounded-[1.5rem] bg-white/80 p-4 shadow-sm">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">Reward</p>
-                <p className="mt-2 text-2xl font-black text-slate-900">+{activeLesson.rewardStars}★</p>
-              </div>
-              <div className="rounded-[1.5rem] bg-white/80 p-4 shadow-sm">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">Step</p>
-                <p className="mt-2 text-2xl font-black text-slate-900">{Math.max(1, Math.round(lessonProgress * activeLesson.steps.length))}/{activeLesson.steps.length}</p>
-              </div>
-            </div>
-
-            <CoreQuizEngine
-              key={activeLesson.id}
-              lesson={activeLesson}
-              onCompleteLesson={completeLesson}
-              onExit={exitLesson}
-              onProgress={setLessonProgress}
-            />
-          </div>
+        <FocusLessonShell title={activeLesson.title} subtitle={activeLesson.description} stars={activeLesson.rewardStars} progress={lessonProgress} onExit={exitLesson}>
+          <CoreQuizEngine
+            key={activeLesson.id}
+            lesson={activeLesson}
+            onCompleteLesson={completeLesson}
+            onExit={exitLesson}
+            onProgress={setLessonProgress}
+          />
         </FocusLessonShell>
       )}
 

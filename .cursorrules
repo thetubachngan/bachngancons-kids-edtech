@@ -1,0 +1,14 @@
+# ARCHITECTURE & CODING RULES FOR CLAUDE & AI ASSISTANTS
+# PROJECT: KIDS EDTECH APP (BACHNGANCONS KIDS ENGLISH)
+
+## 1. PURE AUDIO PLAYBACK ENGINE RULES (QUY TẮC PHÁT ÂM THANH CHUẨN)
+- **100% Static MP3 Audio Engine**: Dự án sử dụng 100% tệp MP3 thu sẵn trong `data/audioManifest.ts` (`/audio/generated/...`).
+- **Strictly Disable Web Speech API for Vocabulary & Examples**: Tuyệt đối KHÔNG sử dụng Web Speech API (`speechSynthesis`, `SpeechSynthesisUtterance`) và KHÔNG gọi `speechSynthesis.cancel()` trong luồng phát MP3 từ vựng/ví dụ để tránh ngắt gián đoạn kênh âm thanh làm nuốt âm đầu.
+- **Zero Initial Consonant Truncation**: Không dùng lại duy nhất một instance HTMLAudioElement bị dính lệnh `currentTime = 0` bất đồng bộ. Sử dụng Web Audio API (`AudioContext` + `AudioBuffer`) hoặc tạo luồng Audio độc lập cho mỗi lần phát để đảm bảo phát trọn vẹn 100% phụ âm đầu tiên từ giây 0.00s.
+- **Zero-Latency Response (0ms)**: Loại bỏ toàn bộ thời gian chờ / timeout nhân tạo (`setTimeout` delay 180ms). Bấm chọn từ là âm thanh vang lên ngay lập tức.
+- **Lesson Pre-decoding**: Tự động tải trước và nạp danh sách tệp MP3 của Bài học (`Lesson`) vào bộ nhớ RAM ngay khi vừa vào màn hình bài học.
+
+## 2. UI/UX EDTECH & GAMIFICATION RULES
+- **One Screen, One Task**: Giữ giao diện Focus Shell đơn giản, loại bỏ thanh điều hướng rườm rà trong lúc bé học.
+- **Pastel & 3D Playful Styling**: Sử dụng bảng màu tươi sáng (amber, emerald, sky) kết hợp hiệu ứng phím bấm 3D (`active:translate-y-[4px]`).
+- **Mascot Interaction**: Cập nhật cảm xúc chú Ong Bee 🐝 linh hoạt theo từng thao tác (`happy`, `encouraging`, `celebrating`, `oops`).

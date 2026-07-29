@@ -172,3 +172,23 @@ export const triggerCelebrationConfetti = () => {
   });
 };
 ```
+
+---
+
+### 7. KIẾN TRÚC & QUY TẮC PHÁT ÂM THANH TRIỆT ĐỂ (PURE STATIC AUDIO ENGINE)
+
+Tài liệu này quy định kiến trúc và quy tắc xử lý âm thanh bắt buộc nhằm giải quyết dứt điểm các lỗi **"Nuốt âm đầu"** và **"Độ trễ khi chuyển từ"**:
+
+1. **Sử dụng 100% Tệp MP3 Static (`data/audioManifest.ts`)**:
+   - Sử dụng các tệp MP3 đã sinh sẵn trong `/audio/generated/words/*.mp3`, `/audio/generated/examples/*.mp3` và `/audio/generated/conversations/*.mp3`.
+   - Tuyệt đối loại bỏ Web Speech API (`speechSynthesis`, `SpeechSynthesisUtterance`) ra khỏi luồng phát âm thanh chính.
+
+2. **Chống Nuốt Âm Đầu (No Initial Consonant Truncation)**:
+   - Không gọi `speechSynthesis.cancel()` khi phát MP3 để tránh can thiệp làm gián đoạn kênh âm thanh trình duyệt.
+   - Không dùng lại 1 instance `HTMLAudioElement` bị dính lệnh `currentTime = 0` bất đồng bộ.
+   - Sử dụng Web Audio API (`AudioContext` + `AudioBufferSourceNode`) hoặc phát luồng Audio riêng cho mỗi lần bấm để giữ trọn vẹn 100% phụ âm khởi đầu từ giây `0.00s`.
+
+3. **Phát Ngay Lập Tức (Zero-Latency 0ms)**:
+   - Loại bỏ toàn bộ các khoảng delay/timeout nhân tạo (`setTimeout` delay 180ms).
+   - Tự động preload và decode dữ liệu MP3 của Bài học (`Lesson`) vào bộ nhớ RAM ngay khi giao diện bài học được mount.
+

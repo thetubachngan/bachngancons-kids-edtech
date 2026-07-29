@@ -1,97 +1,125 @@
-# THIẾT KẾ GIAO DIỆN & HOẠT ẢNH MƯỢT MÀ (TỪ CLAUDE)
-## ỨNG DỤNG WEB HỌC TIẾNG ANH LỚP 2
+# THIẾT KẾ GIAO DIỆN, UI/UX & HOẠT ẢNH MƯỢT MÀ (TỪ CLAUDE)
+## ỨNG DỤNG WEB HỌC TIẾNG ANH CHO TRẺ EM (KIDS EDTECH APP)
 
-Tài liệu này tập trung vào thẩm mỹ UI/UX EdTech, hệ màu sắc Pastel vui nhộn, phím bấm 3D và các kịch bản chuyển động bằng Framer Motion.
+Tài liệu này tập trung vào thiết kế thẩm mỹ UI/UX EdTech cao cấp, hệ màu sắc Pastel vui nhộn, phím bấm & Node 3D, các kịch bản chuyển động (Framer Motion, CSS Animation) và trải nghiệm giao diện người dùng theo mô hình Learning Path & Focus Shell mới nhất.
 
 ---
 
-### 1. HỆ MÀU SẮC PASTEL DÀNH CHO TRẺ EM (COLOR PALETTE)
-Tránh sử dụng các màu quá chói hoặc các màu xám xịt của doanh nghiệp. Ta sử dụng hệ màu tươi sáng mang tính giáo dục, lấy cảm hứng từ các hãng đồ chơi thông minh:
+### 1. NGUYÊN TẮC THIẾT KẾ UI/UX EDTECH & HỆ MÀU SẮC PASTEL
 
-- **Màu nền chủ đạo**: `bg-amber-50` (Vàng kem sữa ấm áp, thân thiện, chống mỏi mắt tốt hơn màu trắng tinh).
-- **Màu chủ đề Animals**: `bg-emerald-100 text-emerald-700` (Xanh ngọc Mint).
-- **Màu chủ đề Family**: `bg-pink-100 text-pink-700` (Hồng đào).
-- **Màu chủ đề School**: `bg-sky-100 text-sky-700` (Xanh da trời).
-- **Màu chủ đề Colors**: `bg-purple-100 text-purple-700` (Tím oải hương).
-- **Màu nút nhấn 3D**: Sử dụng shadow dày phía dưới cùng tông màu để giả lập phím nhựa đồ chơi:
+Ứng dụng hướng tới trẻ em từ 5-9+ tuổi, do đó giao diện cần loại bỏ phong cách xám xịt của doanh nghiệp, thay vào đó là hệ màu tươi sáng, ấm áp và chống mỏi mắt lấy cảm hứng từ các nền tảng edtech lớn (Duolingo ABC, Lingokids):
+
+- **Màu nền ứng dụng**: `bg-gradient-to-b from-amber-50 via-pink-50 to-sky-50` (Vàng kem chuyển sắc mượt mà, thân thiện, dịu mắt).
+- **Màu sắc 3 Cấp độ (Unit Paths)**:
+  - **Explorer Path (5-6 tuổi)**: `bg-amber-100 border-amber-300 text-amber-900` (Vàng tươi ngộ nghĩnh).
+  - **Builder Trail (7-8 tuổi)**: `bg-emerald-100 border-emerald-300 text-emerald-900` (Xanh Mint dịu mát).
+  - **Challenger Run (9+ tuổi)**: `bg-sky-100 border-sky-300 text-sky-900` (Xanh da trời năng động).
+- **Thiết kế Nút bấm 3D dạng Phím Đồ chơi Nhựa**:
+  Sử dụng shadow dày phía dưới cùng hiệu ứng `active:translate-y-[4px]` để giả lập nút bấm nhựa ngoài đời thật:
   ```html
-  <button class="px-8 py-4 bg-yellow-400 text-yellow-900 font-bold rounded-2xl border-b-4 border-yellow-600 active:border-b-0 active:translate-y-[4px] transition-all text-xl shadow-lg">
-    Bắt đầu học 🚀
+  <button class="px-6 py-3.5 bg-yellow-400 text-yellow-950 font-black rounded-2xl border-b-4 border-yellow-600 active:border-b-0 active:translate-y-[4px] transition-all text-lg shadow-lg hover:bg-yellow-300">
+    Bắt đầu học ngay 🚀
   </button>
   ```
 
 ---
 
-### 2. HIỆU ỨNG LẬT THẺ 3D (FLASHCARD FLIP ANIMATION)
-Sử dụng Framer Motion để tạo chuyển động lật thẻ giống như thẻ giấy thật ngoài đời:
+### 2. GIAO DIỆN BẢN ĐỒ HỌC TẬP ZICZAC (`LearningMap.tsx`)
 
-```typescript
-// components/Flashcard.tsx
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+Bản đồ bài học thể hiện tiến trình tuyến tính sinh động với các Node bài học tương tác theo các trạng thái:
 
-export const Flashcard = ({ word, phonetic, translation, emoji }) => {
-  const [isFlipped, setIsFlipped] = useState(false);
+- **`completed`**: Mở khóa, viền vàng rực rỡ, hiển thị sao vàng `★` tích lũy.
+- **`current`**: Node hiện tại với hiệu ứng nảy/phát sáng nhịp nhàng thu hút bé bấm vào.
+- **`locked`**: Khóa mờ, màu xám dịu `bg-slate-200`, hiển thị biểu tượng khóa.
 
+```tsx
+// Minh họa cấu trúc Node bài học trên bản đồ
+export const LessonNode = ({ status, title, stars, onClick }) => {
+  const isCompleted = status === "completed";
+  const isCurrent = status === "current";
+  
   return (
-    <div 
-      className="w-64 h-80 cursor-pointer perspective-1000"
-      onClick={() => setIsFlipped(!isFlipped)}
+    <button
+      onClick={onClick}
+      disabled={status === "locked"}
+      className={`relative flex h-20 w-20 items-center justify-center rounded-full border-b-4 font-black transition-all shadow-xl ${
+        isCompleted
+          ? "bg-amber-400 border-amber-600 text-amber-950 hover:scale-105"
+          : isCurrent
+            ? "animate-bounce bg-emerald-400 border-emerald-600 text-emerald-950 ring-4 ring-emerald-200"
+            : "bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed"
+      }`}
     >
-      <motion.div
-        className="w-full h-full relative preserve-3d"
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, ease: "easeInOut" }}
-      >
-        {/* MẶT TRƯỚC (TIẾNG ANH) */}
-        <div className="absolute inset-0 backface-hidden bg-white border-4 border-yellow-300 rounded-3xl p-6 flex flex-col justify-between items-center shadow-xl">
-          <div className="text-8xl my-auto select-none">{emoji}</div>
-          <div className="text-center">
-            <h3 className="text-3xl font-extrabold text-gray-800 tracking-wide">{word}</h3>
-            <p className="text-gray-500 font-medium text-sm mt-1">{phonetic}</p>
-          </div>
-        </div>
-
-        {/* MẶT SAU (TIẾNG VIỆT) */}
-        <div 
-          className="absolute inset-0 backface-hidden bg-yellow-100 border-4 border-yellow-300 rounded-3xl p-6 flex flex-col justify-center items-center shadow-xl rotate-y-180"
-        >
-          <p className="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">Ý nghĩa là:</p>
-          <h4 className="text-4xl font-extrabold text-yellow-900">{translation}</h4>
-          <span className="text-sm text-gray-400 mt-6 select-none">(Bấm để lật lại)</span>
-        </div>
-      </motion.div>
-    </div>
+      <span className="text-xl">{isCompleted ? "★" : isCurrent ? "▶" : "🔒"}</span>
+    </button>
   );
 };
 ```
 
 ---
 
-### 3. LINH VẬT TƯƠNG TÁC (INTERACTIVE MASCOT ANIMATIONS)
-Mascot (ví dụ: Chú Ong vàng "Bee") sẽ có hiệu ứng bồng bềnh (floating) để giao diện trông sinh động và "sống" hơn:
+### 3. CHẾ ĐỘ HỌC TẬP TRUNG ("ONE SCREEN, ONE TASK - FOCUS SHELL")
 
-```typescript
-// Hiệu ứng bồng bềnh nhẹ nhàng liên tục
-const floatTransition = {
-  y: {
-    duration: 2,
+Màn hình `FocusLessonShell` tạo không gian học tập tuyệt đối cho trẻ:
+- An toàn, loại bỏ hoàn toàn menu rườm rà.
+- Thanh tiến trình bài học (Progress Bar) chạy mịn từ 0% đến 100%.
+- Nút đóng (`X`) tròn nổi bật giúp dừng phiên học dễ dàng.
+
+```tsx
+export const FocusLessonShell = ({ title, progress, onExit, children }) => (
+  <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/40 backdrop-blur-md">
+    <header className="flex items-center justify-between bg-white/90 px-6 py-4 shadow-md">
+      <button onClick={onExit} className="rounded-full p-2 hover:bg-slate-100 text-slate-700">
+        ✕
+      </button>
+      <div className="h-4 w-1/2 overflow-hidden rounded-full bg-slate-200">
+        <div 
+          className="h-full bg-amber-400 transition-all duration-300 ease-out" 
+          style={{ width: `${progress * 100}%` }} 
+        />
+      </div>
+      <span className="font-bold text-amber-700">{title}</span>
+    </header>
+    <main className="flex-1 overflow-y-auto p-4">{children}</main>
+  </div>
+);
+```
+
+---
+
+### 4. ANIMATION MASCOT & 4 TRẠNG THÁI CẢM XÚC (`Mascot.tsx`)
+
+Chú Ong Bee linh vật sẽ thay đổi biểu cảm và hoạt ảnh bồng bềnh theo kết quả tương tác của bé:
+
+- **`happy`**: Biểu cảm vui tươi khi bé chọn đúng.
+- **`encouraging`**: Biểu cảm cổ vũ khi bắt đầu hoặc chuyển câu.
+- **`celebrating`**: Biểu cảm ăn mừng nhảy vọt khi hoàn thành bài học.
+- **`oops`**: Biểu cảm ngơ ngác nhẹ nhàng khi bé chọn sai để bé không bị áp lực.
+
+```tsx
+// Transition bồng bềnh (Floating Animation)
+const floatAnimation = {
+  y: ["0px", "-10px", "0px"],
+  transition: {
+    duration: 2.5,
     repeat: Infinity,
-    repeatType: "reverse",
-    ease: "easeInOut"
-  }
+    ease: "easeInOut",
+  },
 };
 
-export const FloatingMascot = () => {
+export const Mascot = ({ mood = "happy" }) => {
+  const emojiMap = {
+    happy: "🐝",
+    encouraging: "🐝✨",
+    celebrating: "🐝🎉",
+    oops: "🐝😅",
+  };
+
   return (
-    <motion.div
-      animate={{ y: ["0px", "-12px", "0px"] }}
-      transition={floatTransition}
-      className="relative flex flex-col items-center"
-    >
-      <span className="text-7xl drop-shadow-md select-none">🐝</span>
-      <div className="mt-2 bg-yellow-400 text-yellow-950 font-bold px-3 py-1 rounded-full text-xs shadow-sm border border-yellow-500">
-        Hi, tớ là Bee!
+    <motion.div animate={floatAnimation} className="flex flex-col items-center">
+      <div className="text-8xl drop-shadow-md select-none">{emojiMap[mood]}</div>
+      <div className="mt-2 rounded-full bg-amber-400 px-4 py-1 font-black text-amber-950 shadow-md">
+        Bee nè! 🚀
       </div>
     </motion.div>
   );
@@ -100,27 +128,47 @@ export const FloatingMascot = () => {
 
 ---
 
-### 4. HIỆU ỨNG TUNG CONFETTI & ĂN MỪNG
-Khi bé vượt qua một câu Quiz đúng, chúng ta dùng thư viện `canvas-confetti` để tung pháo hoa tràn màn hình. Điều này kích thích hormone dopamine giúp bé thích thú học tiếp.
+### 5. HIỆU ỨNG TƯƠNG TÁC VISUAL (FLASHCARD, LETTERBOARD, VOICE PANEL)
+
+1. **Hiệu ứng Lật Thẻ 3D (`Flashcard.tsx`)**:
+   Sử dụng Framer Motion lật 180 độ theo trục Y cho cảm giác như lật thẻ giấy thật ngoài đời:
+   ```tsx
+   <motion.div
+     animate={{ rotateY: isFlipped ? 180 : 0 }}
+     transition={{ duration: 0.5, ease: "easeInOut" }}
+     className="preserve-3d relative h-80 w-64 cursor-pointer"
+   >
+     {/* Mặt trước tiếng Anh & Mặt sau tiếng Việt */}
+   </motion.div>
+   ```
+
+2. **Bảng Ghép Chữ Cái (`LetterBoard.tsx`)**:
+   Các ô chữ cái nổi 3D màu sắc sinh động, tự động nảy khi chạm vào để ghép từ vựng hoàn chỉnh.
+
+3. **Giao diện Thu âm Giọng nói (`VoiceRecorderPanel.tsx`)**:
+   Micro cỡ lớn với vòng tròn phát sáng hiệu ứng gợn sóng (pulse ring animation) kích thích bé tự tin nói to vào micro.
+
+---
+
+### 6. HIỆU ỨNG THƯỞNG DOPAMINE & POPUP ĂN MỪNG (`RewardOverlay.tsx`)
+
+Khi bé hoàn thành bài học, Popup Popup thưởng `RewardOverlay` hiện ra rực rỡ kết hợp bắn pháo hoa `canvas-confetti` tràn màn hình:
 
 ```typescript
-import confetti from 'canvas-confetti';
+import confetti from "canvas-confetti";
 
-export const triggerQuizSuccess = () => {
-  // Bắn pháo hoa từ bên trái
+export const triggerCelebrationConfetti = () => {
   confetti({
-    particleCount: 80,
-    spread: 60,
-    origin: { x: 0.1, y: 0.6 },
-    colors: ['#FCD34D', '#34D399', '#60A5FA', '#F472B6']
+    particleCount: 100,
+    spread: 70,
+    origin: { x: 0.2, y: 0.5 },
+    colors: ["#FCD34D", "#34D399", "#60A5FA", "#F472B6"],
   });
-
-  // Bắn pháo hoa từ bên phải
   confetti({
-    particleCount: 80,
-    spread: 60,
-    origin: { x: 0.9, y: 0.6 },
-    colors: ['#FCD34D', '#34D399', '#60A5FA', '#F472B6']
+    particleCount: 100,
+    spread: 70,
+    origin: { x: 0.8, y: 0.5 },
+    colors: ["#FCD34D", "#34D399", "#60A5FA", "#F472B6"],
   });
 };
 ```

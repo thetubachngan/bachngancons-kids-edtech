@@ -25,7 +25,7 @@ export const FocusLessonShell = ({
           type="button"
           onClick={onExit}
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition active:scale-95 hover:bg-slate-200"
-          aria-label="Thoát bài học"
+          aria-label={`Thoát bài học ${title}`}
         >
           <X className="h-5 w-5" />
         </button>

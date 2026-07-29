@@ -46,6 +46,7 @@ export const VoiceRecorderPanel = ({
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
   const RecognitionCtor = useMemo(() => {
@@ -58,6 +59,11 @@ export const VoiceRecorderPanel = ({
     if (typeof window === "undefined") return false;
     const anyWindow = window as RecognitionWindow;
     return Boolean(anyWindow.MediaRecorder && navigator.mediaDevices?.getUserMedia);
+  }, []);
+
+  const hasFileCapture = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return true;
   }, []);
 
   useEffect(() => {
@@ -171,7 +177,13 @@ export const VoiceRecorderPanel = ({
     mediaRecorderRef.current.stop();
   };
 
+  const openNativeCapture = () => {
+    setError(null);
+    fileInputRef.current?.click();
+  };
+
   const useFallbackRecording = !RecognitionCtor && hasMediaRecorder;
+  const useCaptureFallback = !RecognitionCtor && !hasMediaRecorder && hasFileCapture;
 
   return (
     <div className="space-y-4 rounded-[2rem] bg-white p-5 shadow-xl">
@@ -196,14 +208,37 @@ export const VoiceRecorderPanel = ({
         <motion.button
           whileTap={{ scale: 0.96 }}
           animate={isRecording ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-          onClick={isRecording ? stopRecording : startRecording}
-          className={`kid-button justify-center ${useFallbackRecording ? "border-sky-600 bg-sky-300 text-sky-950" : "border-slate-300 bg-slate-100 text-slate-400"}`}
-          disabled={!hasMediaRecorder || isListening}
+          onClick={hasMediaRecorder ? (isRecording ? stopRecording : startRecording) : openNativeCapture}
+          className={`kid-button justify-center ${useFallbackRecording || useCaptureFallback ? "border-sky-600 bg-sky-300 text-sky-950" : "border-slate-300 bg-slate-100 text-slate-400"}`}
+          disabled={isListening}
         >
           {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-          {isRecording ? "Dừng ghi âm" : "Ghi âm dự phòng"}
+          {hasMediaRecorder ? (isRecording ? "Dừng ghi âm" : "Ghi âm dự phòng") : "Mở micro điện thoại"}
         </motion.button>
       </div>
+
+      {useCaptureFallback ? (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="audio/*"
+          capture="user"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            if (recordedUrl) {
+              URL.revokeObjectURL(recordedUrl);
+              setRecordedUrl(null);
+            }
+
+            const nextUrl = URL.createObjectURL(file);
+            setRecordedUrl(nextUrl);
+            setError(null);
+          }}
+        />
+      ) : null}
 
       <div className="rounded-2xl bg-slate-50 p-4 text-center text-sm font-bold text-slate-700">
         {transcript || (isRecording ? "Đang ghi âm giọng của bé..." : "Bé hãy bấm micro và nói theo mẫu.")}

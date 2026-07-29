@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "generate:audio": "tsx scripts/generate-audio.ts"
   },
   "dependencies": {
     "canvas-confetti": "latest",
@@ -24,7 +25,9 @@
     "@types/react-dom": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "google-tts-api": "^2.0.2",
     "tailwindcss": "latest",
+    "tsx": "^4.23.1",
     "typescript": "latest"
   }
 }

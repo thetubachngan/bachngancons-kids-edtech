@@ -1,3 +1,5 @@
+import { getConversationAudioSrc, getExampleAudioSrc, getWordAudioSrc } from "@/data/audioManifest";
+
 export type AppTabKey = "vocabulary" | "conversation" | "quiz";
 export type AgeLevel = "explorer" | "builder" | "challenger";
 export type QuizMode = "emoji" | "meaning" | "spelling";
@@ -206,6 +208,7 @@ const createWord = (
   exampleTranslation: string,
   overrides: WordOverrides = {},
 ): VocabularyWord => ({
+  ...overrides,
   id,
   level,
   word,
@@ -216,9 +219,8 @@ const createWord = (
   exampleTranslation,
   speechText: overrides.speechText ?? (word.includes(" ") ? `${word}.` : undefined),
   exampleSpeechText: overrides.exampleSpeechText,
-  audioSrc: overrides.audioSrc,
-  exampleAudioSrc: overrides.exampleAudioSrc,
-  ...overrides,
+  audioSrc: overrides.audioSrc ?? getWordAudioSrc(id),
+  exampleAudioSrc: overrides.exampleAudioSrc ?? getExampleAudioSrc(id),
 });
 
 const createLine = (
@@ -232,7 +234,7 @@ const createLine = (
   english,
   vietnamese,
   emoji,
-  audioSrc,
+  audioSrc: audioSrc ?? getConversationAudioSrc(english),
 });
 
 export const topics: Topic[] = [

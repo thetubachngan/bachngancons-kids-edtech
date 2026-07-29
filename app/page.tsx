@@ -19,8 +19,29 @@ function AppShell() {
   const [lessonProgress, setLessonProgress] = useState(0);
   const [rewardOpen, setRewardOpen] = useState(false);
   const [rewardStars, setRewardStars] = useState(0);
+  const [isPreparingLesson, setIsPreparingLesson] = useState(false);
 
   const activeLesson = useMemo(() => (activeLessonId ? getLessonById(activeLessonId) : null), [activeLessonId]);
+
+  const collectLessonAudioSources = (lessonId: string) => {
+    const lesson = getLessonById(lessonId);
+    if (!lesson) {
+      return [] as string[];
+    }
+
+    return lesson.steps
+      .flatMap((lessonStep) => [
+        lessonStep.visual.audioSrc,
+        "questionAudioSrc" in lessonStep ? lessonStep.questionAudioSrc : undefined,
+        ...(lessonStep.type === "mcq" || lessonStep.type === "tap-match" ? lessonStep.choices.flatMap((choice) => [choice.audioSrc]) : []),
+      ])
+      .filter(Boolean) as string[];
+  };
+
+  useEffect(() => {
+    const warmLessons = curriculum.units.flatMap((unit) => unit.lessons).slice(0, 3);
+    void preloadAudio(warmLessons.flatMap((lesson) => collectLessonAudioSources(lesson.id)));
+  }, []);
 
   useEffect(() => {
     if (!activeLesson) {
@@ -40,10 +61,20 @@ function AppShell() {
   const completedLessonCount = state.completedLessonIds.length;
   const unlockedLessonCount = state.unlockedLessonIds.length;
 
-  const startLesson = (lessonId: string) => {
-    dispatch({ type: "START_LESSON", lessonId });
-    setActiveLessonId(lessonId);
-    setLessonProgress(0);
+  const startLesson = async (lessonId: string) => {
+    if (isPreparingLesson) {
+      return;
+    }
+
+    setIsPreparingLesson(true);
+    try {
+      await preloadAudio(collectLessonAudioSources(lessonId));
+      dispatch({ type: "START_LESSON", lessonId });
+      setActiveLessonId(lessonId);
+      setLessonProgress(0);
+    } finally {
+      setIsPreparingLesson(false);
+    }
   };
 
   const exitLesson = () => {
@@ -54,6 +85,9 @@ function AppShell() {
 
   const completeLesson = (lessonId: string, starsEarned: number) => {
     const nextLessonId = getNextLessonId(lessonId);
+    if (nextLessonId) {
+      void preloadAudio(collectLessonAudioSources(nextLessonId));
+    }
     dispatch({ type: "COMPLETE_LESSON", lessonId, starsEarned, nextLessonId });
     setRewardStars(starsEarned);
     setRewardOpen(true);
@@ -82,6 +116,11 @@ function AppShell() {
                     <Star className="h-4 w-4" />
                     {state.stars} sao
                   </div>
+                  {isPreparingLesson ? (
+                    <div className="stat-chip bg-violet-200 text-violet-950">
+                      Đang tải bài học...
+                    </div>
+                  ) : null}
                   <div className="stat-chip bg-emerald-200 text-emerald-950">
                     <Trophy className="h-4 w-4" />
                     {completedLessonCount}/{totalLessonCount} lessons

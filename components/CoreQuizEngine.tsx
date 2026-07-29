@@ -114,7 +114,7 @@ export const CoreQuizEngine = ({
   };
 
   const playChoiceAudio = (choice: LessonChoice, afterSpeak?: () => void) => {
-    const spokenText = choice.label;
+    const spokenText = choice.hint ?? choice.label;
 
     speak({
       text: spokenText,
@@ -249,7 +249,7 @@ export const CoreQuizEngine = ({
                 </div>
                 {step.type === "tap-match" || step.type === "mcq" ? (
                   <p className="max-w-md text-sm font-semibold text-slate-500">
-                    Bé hãy bấm nút <span className="font-black text-slate-900">Nghe từ</span> bên dưới từng đáp án để nghe chậm và rõ trước khi chọn.
+                    Bé hãy bấm nút <span className="font-black text-slate-900">Nghe từ</span> bên dưới từng đáp án để nghe đúng từ tiếng Anh của icon trước khi chọn.
                   </p>
                 ) : null}
               </div>

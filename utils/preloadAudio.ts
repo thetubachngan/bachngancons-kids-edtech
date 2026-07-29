@@ -17,6 +17,7 @@ type PlayOptions = {
 
 let audioContext: AudioContext | null = null;
 const bufferCache = new Map<string, Promise<AudioBuffer>>();
+const MAX_CONCURRENT_PREFETCH = 4;
 
 const getAudioContext = () => {
   if (typeof window === "undefined") {
@@ -68,17 +69,28 @@ const ensureAudioBuffer = (src: string) => {
     return cached;
   }
 
-  const promise = loadAudioBuffer(src);
+  const promise = loadAudioBuffer(src).catch((error) => {
+    bufferCache.delete(src);
+    throw error;
+  });
+
   bufferCache.set(src, promise);
   return promise;
 };
 
-export const preloadAudio = (sources: Array<string | undefined | null>) => {
+export const preloadAudio = async (sources: Array<string | undefined | null>) => {
   const uniqueSources = [...new Set(sources.filter((value): value is string => Boolean(value)))];
 
-  uniqueSources.forEach((src) => {
-    void ensureAudioBuffer(src);
-  });
+  for (let index = 0; index < uniqueSources.length; index += MAX_CONCURRENT_PREFETCH) {
+    const batch = uniqueSources.slice(index, index + MAX_CONCURRENT_PREFETCH);
+    await Promise.all(
+      batch.map((src) =>
+        ensureAudioBuffer(src).catch(() => {
+          // Ignore preload errors. Playback can report failures later.
+        }),
+      ),
+    );
+  }
 };
 
 export const playBufferedAudio = (src: string, options: PlayOptions = {}): PlaybackHandle => {
@@ -98,7 +110,7 @@ export const playBufferedAudio = (src: string, options: PlayOptions = {}): Playb
       try {
         sourceNode.stop();
       } catch {
-        // Ignore stop errors when node is already finished.
+        // Ignore stop errors when node already ended.
       }
 
       sourceNode.disconnect();
@@ -148,7 +160,7 @@ export const playBufferedAudio = (src: string, options: PlayOptions = {}): Playb
       };
 
       options.onStart?.();
-      sourceNode.start(0);
+      sourceNode.start(context.currentTime);
     } catch (error) {
       if (!stopped) {
         stop();

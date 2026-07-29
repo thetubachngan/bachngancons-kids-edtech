@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Sparkles, Star, Trophy } from "lucide-react";
 
 import { LearningMap } from "@/components/LearningMap";
@@ -11,6 +11,7 @@ import { RewardOverlay } from "@/components/gamification/RewardOverlay";
 import { StreakBanner } from "@/components/gamification/StreakBanner";
 import { curriculum, getLessonById, getNextLessonId } from "@/data/curriculum";
 import { LearningStoreProvider, totalLessonCount, useLearningStore } from "@/store/learningStore";
+import { preloadAudio } from "@/utils/preloadAudio";
 
 function AppShell() {
   const { state, dispatch } = useLearningStore();
@@ -20,6 +21,20 @@ function AppShell() {
   const [rewardStars, setRewardStars] = useState(0);
 
   const activeLesson = useMemo(() => (activeLessonId ? getLessonById(activeLessonId) : null), [activeLessonId]);
+
+  useEffect(() => {
+    if (!activeLesson) {
+      return;
+    }
+
+    preloadAudio(
+      activeLesson.steps.flatMap((lessonStep) => [
+        lessonStep.visual.audioSrc,
+        "questionAudioSrc" in lessonStep ? lessonStep.questionAudioSrc : undefined,
+        ...(lessonStep.type === "mcq" || lessonStep.type === "tap-match" ? lessonStep.choices.flatMap((choice) => [choice.audioSrc]) : []),
+      ]).filter(Boolean) as string[],
+    );
+  }, [activeLesson]);
 
 
   const completedLessonCount = state.completedLessonIds.length;

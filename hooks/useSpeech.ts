@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { getPreloadedAudio } from "@/utils/preloadAudio";
+
 const WORD_RATE = 0.42;
 const PHRASE_RATE = 0.5;
 const SENTENCE_RATE = 0.58;
@@ -291,8 +293,9 @@ export const useSpeech = () => {
           return;
         }
 
-        const audio = new Audio(options.audioSrc);
-        audio.preload = "auto";
+        const audio = getPreloadedAudio(options.audioSrc);
+        audio.pause();
+        audio.currentTime = 0;
         currentAudioRef.current = audio;
 
         const cleanupAudio = () => {
@@ -339,6 +342,12 @@ export const useSpeech = () => {
       if (interrupt !== "none" && hasActivePlayback) {
         stopCurrentAudio();
         speechSynthesis.cancel();
+
+        if (options.audioSrc) {
+          tryAudioThenSpeech();
+          return;
+        }
+
         pendingTimerRef.current = window.setTimeout(() => {
           pendingTimerRef.current = null;
           tryAudioThenSpeech();

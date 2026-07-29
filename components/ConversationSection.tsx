@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, MessageCircleHeart, Play, Square, Volume2 } 
 import { FloatingMascot } from "@/components/FloatingMascot";
 import type { AgeLevel, ConversationScenario } from "@/data/englishData";
 import { useSpeech } from "@/hooks/useSpeech";
+import { preloadAudio } from "@/utils/preloadAudio";
 
 type ConversationSectionProps = {
   level: Exclude<AgeLevel, "explorer">;
@@ -41,6 +42,10 @@ export const ConversationSection = ({ level, title, description, conversations }
     () => conversations.find((scenario) => scenario.id === resolvedScenarioId) ?? conversations[0],
     [conversations, resolvedScenarioId],
   );
+  const activeScenarioAudioSources = useMemo(
+    () => activeScenario?.lines.flatMap((line) => [line.audioSrc]).filter(Boolean) ?? [],
+    [activeScenario],
+  );
   const resolvedActiveLineIndex = activeScenario ? Math.min(activeLineIndex, activeScenario.lines.length - 1) : 0;
 
   useEffect(() => {
@@ -49,6 +54,10 @@ export const ConversationSection = ({ level, title, description, conversations }
       stop();
     };
   }, [stop]);
+
+  useEffect(() => {
+    preloadAudio(activeScenarioAudioSources);
+  }, [activeScenarioAudioSources]);
 
   useEffect(() => {
     if (!isPlaying || !activeScenario) {

@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import { BookMarked, Sparkles, Volume2 } from "lucide-react";
 
 import { Flashcard } from "@/components/Flashcard";
 import type { AgeLevel, Topic } from "@/data/englishData";
 import { useSpeech } from "@/hooks/useSpeech";
+import { preloadAudio } from "@/utils/preloadAudio";
 
 type VocabularySectionProps = {
   level: AgeLevel;
@@ -49,6 +51,14 @@ export const VocabularySection = ({
   const learnedSet = new Set(learnedWords);
   const selectedLearnedCount = selectedTopic?.words.filter((word) => learnedSet.has(word.id)).length ?? 0;
   const copy = headerCopy[level];
+
+  useEffect(() => {
+    if (!selectedTopic) return;
+
+    preloadAudio([
+      ...selectedTopic.words.flatMap((word) => [word.audioSrc, word.exampleAudioSrc]),
+    ]);
+  }, [selectedTopic]);
 
   if (!selectedTopic) {
     return null;

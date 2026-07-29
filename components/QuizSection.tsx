@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BrainCircuit, RotateCcw, Star, Trophy, Volume2 } from "lucide-react";
 
 import type { AgeLevel, QuizMode, VocabularyWord } from "@/data/englishData";
 import { useSpeech } from "@/hooks/useSpeech";
 import { triggerQuizSuccess } from "@/utils/confetti";
+import { preloadAudio } from "@/utils/preloadAudio";
 import { playErrorSound, playSuccessSound } from "@/utils/soundEffects";
 
 type QuizSectionProps = {
@@ -165,6 +166,12 @@ export const QuizSection = ({ level, levelLabel, mode, words, highScore, onEarnS
 
   const copy = copyByMode[mode];
   const currentQuestion = questions[currentIndex];
+
+  useEffect(() => {
+    preloadAudio(
+      questions.flatMap((question) => [question.audioSrc].filter(Boolean) as string[]),
+    );
+  }, [questions]);
 
   const resetRoundState = () => {
     setSelectedOption(null);

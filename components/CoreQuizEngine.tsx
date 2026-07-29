@@ -7,6 +7,7 @@ import { CheckCircle2, Star, Volume2, X } from "lucide-react";
 import { useSpeech } from "@/hooks/useSpeech";
 import type { Lesson, LessonChoice, LessonStep } from "@/data/learningSchema";
 import { playFeedbackSound } from "@/utils/html5Audio";
+import { preloadAudio } from "@/utils/preloadAudio";
 import { TapChoiceGrid } from "@/components/interactions/TapChoiceGrid";
 import { LetterBoard } from "@/components/interactions/LetterBoard";
 import { VoiceRecorderPanel } from "@/components/interactions/VoiceRecorderPanel";
@@ -34,6 +35,18 @@ export const CoreQuizEngine = ({
 
   const step = lesson.steps[stepIndex];
   const progress = useMemo(() => (lesson.steps.length ? (stepIndex + 1) / lesson.steps.length : 1), [lesson.steps.length, stepIndex]);
+  const stepAudioSources = useMemo(
+    () =>
+      step
+        ? [
+            step.visual.imageSrc,
+            step.visual.audioSrc,
+            "questionAudioSrc" in step ? step.questionAudioSrc : undefined,
+            ...(step.type === "mcq" || step.type === "tap-match" ? step.choices.flatMap((choice) => [choice.audioSrc]) : []),
+          ].filter(Boolean) as string[]
+        : [],
+    [step],
+  );
   const mascotMood: "happy" | "encouraging" | "celebrating" | "oops" =
     feedback === "correct"
       ? "happy"
@@ -46,6 +59,10 @@ export const CoreQuizEngine = ({
   useEffect(() => {
     onProgress?.(progress);
   }, [onProgress, progress]);
+
+  useEffect(() => {
+    preloadAudio(stepAudioSources);
+  }, [stepAudioSources]);
 
   useEffect(() => {
     stop();

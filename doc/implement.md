@@ -42,28 +42,26 @@ Tài liệu này mô tả chi tiết toàn bộ kiến trúc mô hình mới, s�
 
 ---
 
-### I. MÔ HÌNH KIẾN TRÚC MỚI (DUOLINGO ABC & LINGOKIDS STYLE LEARNING PATH) [UID: IMP-SEC-I]
+### I. MÔ HÌNH KIẾN TRÚC MỚI (MOBILE-FIRST ZERO-SCROLL & SNAKE PATH MAP) [UID: IMP-SEC-I]
 
-Ứng dụng được thiết kế và triển khai theo mô hình **Game hóa Lộ trình Học tập (Node-based Learning Map)** kết hợp với **Chế độ Học tập Trung (One Screen Focus Engine)**:
+Ứng dụng được thiết kế và tối ưu hoàn hảo theo mô hình **Giao diện Di động Không Vuốt Màn hình (Mobile Zero-Scroll 100dvh)** kết hợp với **Bản đồ Lộ trình 3D Ziczac (Snake Path Learning Map)**:
 
-1. **Bản đồ Học tập Tuyến tính (`LearningMap`)** [UID: IMP-SEC-I-1]:
-   * Trực quan hóa tiến trình học bằng các đường dẫn ziczac sinh động chia thành 3 Cấp độ (Unit Paths).
-   * Mỗi bài học được biểu diễn bằng một Node tương tác nổi bật với các trạng thái rõ ràng:
-     * `completed`: Đã hoàn thành (nổi bật sao vàng và biểu tượng hoàn thành).
-     * `current`: Bài học hiện tại (hiệu ứng nảy/phát sáng kích thích bé bấm vào học).
-     * `locked`: Chưa mở khóa (màu xám nhạt, khóa lại cho đến khi hoàn thành các bài học trước).
+1. **Bản đồ Học tập Đường mòn Ziczac (`LearningMap`)** [UID: IMP-SEC-I-1]:
+   * Trực quan hóa tiến trình học bằng đường mòn Ziczac sinh động (Snake Path phong cách Duolingo Kids) chia thành các Cấp độ (Unit Paths).
+   * Các Node bài học dạng nút tròn 3D rực rỡ với các trạng thái rõ ràng:
+     * `completed`: Đã hoàn thành (nổi bật với biểu tượng check và số sao đạt được).
+     * `current`: Bài học hiện tại (nút tròn màu vàng 3D với hiệu ứng nhịp đập Pulse kích thích bé chạm vào học).
+     * `locked`: Chưa mở khóa (màu xám dịu, biểu tượng khóa an toàn).
 
-2. **Chế độ Học tập Trung ("One Screen, One Task - Focus Shell")** [UID: IMP-SEC-I-2]:
-   * Khi bé bắt đầu một bài học, ứng dụng chuyển sang giao diện `FocusLessonShell`, ẩn hoàn toàn các thanh điều hướng rườm rà để bé không bị phân tâm.
-   * Thanh tiến trình (Progress Bar) phía trên hiển thị trực quan phần trăm (%) hoàn thành bài học.
-   * Nút thoát an toàn giúp bé hoặc phụ huynh có thể dừng phiên học bất cứ lúc nào.
+2. **Chế độ Học tập Trung Cố định Viewport ("Mobile Zero-Scroll Focus Shell")** [UID: IMP-SEC-I-2]:
+   * Khi bé bắt đầu một bài học, ứng dụng cố định toàn bộ màn hình theo `h-[100dvh]` với `overflow-hidden`, ẩn hoàn toàn menu rườm rà và triệt tiêu thanh cuộn dọc (scrollbar).
+   * Thanh trên (Top bar) tinh gọn gồm Nút thoát `[X]`, Thanh tiến trình (Progress bar) mượt mà và Đếm số sao tích lũy.
+   * Toàn bộ phần câu hỏi & đáp án hiển thị vừa vặn 100% trong 1 màn hình duy nhất của điện thoại, giúp bé học mà không phải vuốt màn hình tìm đáp án.
 
-3. **Luồng Học tập Liên hoàn 4 Kỹ năng (`CoreQuizEngine`)** [UID: IMP-SEC-I-3]:
-   * Mỗi Bài học (`Lesson`) bao gồm chuỗi các bước bài tập (`LessonStep`) đa dạng kỹ năng:
-     * **Nghe (Listening)**: Chạm đáp án đúng qua phát âm/âm thanh.
-     * **Đọc/Hiểu (Reading)**: Trắc nghiệm hình ảnh, từ vựng hoặc câu ví dụ.
-     * **Viết/Ghép từ (Writing)**: Ghép chính tả bằng bảng chữ cái tương tác `LetterBoard`.
-     * **Nói (Speaking)**: Thu âm và luyện phát âm với `VoiceRecorderPanel`.
+3. **Luồng Học tập Tương tác 1 Chạm & Bottom Sheet Phản hồi (`CoreQuizEngine`)** [UID: IMP-SEC-I-3]:
+   * **Single Hero Card**: Gộp Linh vật Ong Bee 🐝 với bóng thoại câu hỏi (Speech Bubble) và hình ảnh minh họa từ vựng vào trung tâm màn hình.
+   * **1-Tap Choice Grid (`TapChoiceGrid`)**: 4 thẻ đáp án dạng 2x2 nhỏ gọn vừa tầm tay trẻ, chạm trực tiếp vào thẻ để vừa nghe âm thanh vừa chọn đáp án (loại bỏ nút "Nghe từ" cồng kềnh phía dưới).
+   * **Bottom Sheet Phản hồi**: Màn hình phản hồi trượt mượt từ dưới lên (slide-up) khi bé chọn đáp án (xanh lá khi đúng, đỏ cam khi chưa đúng), kèm hiệu ứng âm thanh và nút "Tiếp tục" 3D.
 
 ---
 

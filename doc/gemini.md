@@ -152,3 +152,18 @@ export const playSuccessSound = () => {
 
 - **Tải phông chữ Fredoka tối ưu**: Cấu hình Next.js `next/font/google` nạp phông chữ không gây giật màn hình khi tải (Zero Layout Shift).
 - **Emoji Graphics & Dynamic SVG**: Thay vì dùng hàng trăm ảnh PNG/JPG gây tốn dung lượng băng thông, ứng dụng kết hợp Emoji vẽ lớn với CSS shadow 3D cho đồ họa sắc nét ở mọi độ phân giải thiết bị.
+
+---
+
+### 7. TỐI ƯU HÓA MOBILE APP & CẤU HÌNH KHÔNG VUỐT MÀNH HÌNH (ZERO-SCROLL 100DVH)
+
+Khi đóng gói ứng dụng bằng Capacitor cho Android APK và iOS, trải nghiệm màn hình nhỏ đòi hỏi các quy tắc kỹ thuật nghiêm ngặt:
+
+1. **Khóa Chiều cao Viewport (`h-[100dvh] flex flex-col overflow-hidden`)**:
+   - Sử dụng đơn vị `dvh` (Dynamic Viewport Height) trong Tailwind CSS giúp giao diện tự co giãn khớp 100% với vùng hiển thị thực tế của điện thoại (kể cả khi thanh địa chỉ / thanh điều hướng hệ thống ẩn/hiện).
+   - Loại bỏ hoàn toàn thanh cuộn dọc `overflow-hidden` trong màn hình học tập (`FocusLessonShell` & `CoreQuizEngine`), đảm bảo trẻ không phải vuốt màn hình để tìm câu hỏi hay đáp án.
+
+2. **Lưới Đáp Án 2x2 & Tương Tác 1 Chạm (1-Tap Smart Interaction)**:
+   - Các thẻ trắc nghiệm `TapChoiceGrid` được thiết kế 2x2 nhỏ gọn với chiều cao vừa tầm tay bấm (`min-h-[96px]`), tích hợp phát âm tức thì khi chạm mà không phát sinh thêm thẻ dư thừa.
+   - Thẻ ghép từ `LetterBoard` tối ưu ô chứa `h-12 w-12` giúp toàn bộ tương tác hiển thị hoàn chỉnh trên màn hình di động 360x800px trở lên.
+

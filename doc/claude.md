@@ -24,63 +24,63 @@ Tài liệu này tập trung vào thiết kế thẩm mỹ UI/UX EdTech cao cấ
 
 ---
 
-### 2. GIAO DIỆN BẢN ĐỒ HỌC TẬP ZICZAC (`LearningMap.tsx`)
+### 2. GIAO DIỆN BẢN ĐỒ HỌC TẬP ZICZAC SÂN CHƠI 3D (`LearningMap.tsx`)
 
-Bản đồ bài học thể hiện tiến trình tuyến tính sinh động với các Node bài học tương tác theo các trạng thái:
+Bản đồ bài học thể hiện tiến trình tuyến tính ziczac (Snake Path) rực rỡ với các Node nút tròn 3D tương tác theo các trạng thái:
 
-- **`completed`**: Mở khóa, viền vàng rực rỡ, hiển thị sao vàng `★` tích lũy.
-- **`current`**: Node hiện tại với hiệu ứng nảy/phát sáng nhịp nhàng thu hút bé bấm vào.
-- **`locked`**: Khóa mờ, màu xám dịu `bg-slate-200`, hiển thị biểu tượng khóa.
+- **`completed`**: Mở khóa, nút tròn màu xanh emerald 3D viền nổi, hiển thị biểu tượng Check `✓` và số sao tích lũy.
+- **`current`**: Node hiện tại màu vàng 3D với hiệu ứng nhịp đập Pulse `animate-pulse` kích thích bé chạm vào mở bài.
+- **`locked`**: Khóa mờ, màu xám dịu `bg-slate-200`, hiển thị biểu tượng khóa an toàn.
 
 ```tsx
-// Minh họa cấu trúc Node bài học trên bản đồ
-export const LessonNode = ({ status, title, stars, onClick }) => {
+// Minh họa cấu trúc Node tròn 3D ziczac trên bản đồ Snake Path
+export const SnakeLessonNode = ({ status, title, rewardStars, onClick }) => {
   const isCompleted = status === "completed";
   const isCurrent = status === "current";
   
   return (
-    <button
+    <motion.button
+      whileTap={{ scale: 0.92 }}
       onClick={onClick}
       disabled={status === "locked"}
-      className={`relative flex h-20 w-20 items-center justify-center rounded-full border-b-4 font-black transition-all shadow-xl ${
+      className={`relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full border-4 border-b-8 shadow-xl transition-all ${
         isCompleted
-          ? "bg-amber-400 border-amber-600 text-amber-950 hover:scale-105"
+          ? "border-emerald-400 border-b-emerald-600 bg-emerald-500 text-white"
           : isCurrent
-            ? "animate-bounce bg-emerald-400 border-emerald-600 text-emerald-950 ring-4 ring-emerald-200"
-            : "bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed"
+            ? "border-amber-300 border-b-amber-500 bg-amber-400 text-slate-900 ring-8 ring-amber-200/70"
+            : "border-slate-300 border-b-slate-400 bg-slate-200 text-slate-400 cursor-not-allowed"
       }`}
     >
-      <span className="text-xl">{isCompleted ? "★" : isCurrent ? "▶" : "🔒"}</span>
-    </button>
+      {isCompleted ? "✓" : isCurrent ? "▶" : "🔒"}
+    </motion.button>
   );
 };
 ```
 
 ---
 
-### 3. CHẾ ĐỘ HỌC TẬP TRUNG ("ONE SCREEN, ONE TASK - FOCUS SHELL")
+### 3. CHẾ ĐỘ HỌC TẬP TRUNG ZERO-SCROLL ("MOBILE 100DVH FOCUS SHELL")
 
-Màn hình `FocusLessonShell` tạo không gian học tập tuyệt đối cho trẻ:
-- An toàn, loại bỏ hoàn toàn menu rườm rà.
-- Thanh tiến trình bài học (Progress Bar) chạy mịn từ 0% đến 100%.
-- Nút đóng (`X`) tròn nổi bật giúp dừng phiên học dễ dàng.
+Màn hình `FocusLessonShell` tạo không gian học tập di động tuyệt đối cho trẻ:
+- **Zero-Scroll Viewport**: Cố định `h-[100dvh]` với `overflow-hidden`. Loại bỏ hoàn toàn thanh cuộn dọc (scrollbar).
+- **Top Bar Tinh gọn**: Nút thoát `[X]` + Thanh tiến trình (Progress Bar) chạy mịn từ 0% đến 100% + Đếm số sao tích lũy.
+- **Bottom Sheet Feedback**: Khi trẻ bấm chọn đáp án, thanh phản hồi trượt mượt từ dưới lên (slide-up) kèm âm thanh và nút "Tiếp tục" 3D rực rỡ.
 
 ```tsx
-export const FocusLessonShell = ({ title, progress, onExit, children }) => (
-  <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/40 backdrop-blur-md">
-    <header className="flex items-center justify-between bg-white/90 px-6 py-4 shadow-md">
-      <button onClick={onExit} className="rounded-full p-2 hover:bg-slate-100 text-slate-700">
+export const FocusLessonShell = ({ title, stars, progress, onExit, children }) => (
+  <div className="fixed inset-0 z-50 flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffaf0] select-none">
+    <header className="flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b border-amber-200/60 bg-white/90 px-4 backdrop-blur-md">
+      <button onClick={onExit} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
         ✕
       </button>
-      <div className="h-4 w-1/2 overflow-hidden rounded-full bg-slate-200">
-        <div 
-          className="h-full bg-amber-400 transition-all duration-300 ease-out" 
-          style={{ width: `${progress * 100}%` }} 
-        />
+      <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100 p-0.5">
+        <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-sky-400 to-amber-400" style={{ width: `${progress * 100}%` }} />
       </div>
-      <span className="font-bold text-amber-700">{title}</span>
+      <div className="flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm font-black text-amber-700">
+        ★ +{stars}
+      </div>
     </header>
-    <main className="flex-1 overflow-y-auto p-4">{children}</main>
+    <main className="relative flex flex-1 flex-col overflow-hidden">{children}</main>
   </div>
 );
 ```

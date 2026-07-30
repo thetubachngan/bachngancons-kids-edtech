@@ -20,11 +20,11 @@ export const LearningMap = ({
   onStartLesson: (lessonId: string) => void;
 }) => {
   return (
-    <div className="w-full max-w-lg mx-auto pb-24 px-4 select-none">
+    <div className="mx-auto w-full max-w-xl select-none px-3 pb-[calc(6rem+var(--safe-bottom))] sm:px-4">
       {curriculum.units.map((unit) => (
-        <section key={unit.id} className="mb-10 flex flex-col items-center">
+        <section key={unit.id} className="mb-8 flex flex-col items-center sm:mb-10">
           {/* Unit Header Banner */}
-          <div className="mb-8 w-full rounded-3xl border-2 border-b-4 border-amber-300 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 p-4 text-center text-white shadow-lg">
+          <div className="mb-6 w-full rounded-[1.75rem] border-2 border-b-4 border-amber-300 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 p-4 text-center text-white shadow-lg sm:mb-8 sm:rounded-3xl">
             <span className="inline-block rounded-full bg-white/30 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-950">
               Level {unit.level}
             </span>
@@ -39,13 +39,13 @@ export const LearningMap = ({
               const isClickable = nodeState !== "locked";
 
               // Stagger offsets for snake path: [0, 48, 0, -48]
-              const offsetPattern = [0, 48, 0, -48];
+              const offsetPattern = [0, 26, 0, -26];
               const offsetX = offsetPattern[index % offsetPattern.length];
 
               return (
                 <div
                   key={lesson.id}
-                  className="flex flex-col items-center"
+                  className="flex w-full flex-col items-center"
                   style={{ transform: `translateX(${offsetX}px)` }}
                 >
                   {/* 3D Circular Lesson Button Node */}
@@ -55,7 +55,7 @@ export const LearningMap = ({
                     transition={{ repeat: nodeState === "current" ? Infinity : 0, duration: 1.5 }}
                     onClick={() => isClickable && onStartLesson(lesson.id)}
                     disabled={!isClickable}
-                    className={`relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full border-4 border-b-8 shadow-xl transition-transform ${
+                    className={`touch-card relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full border-4 border-b-8 shadow-xl transition-transform ${
                       nodeState === "completed"
                         ? "border-emerald-400 border-b-emerald-600 bg-emerald-500 text-white"
                         : nodeState === "current"
@@ -86,8 +86,8 @@ export const LearningMap = ({
                   </motion.button>
 
                   {/* Lesson Label */}
-                  <div className="mt-3 text-center">
-                    <p className="text-xs font-extrabold text-slate-800">{lesson.title}</p>
+                  <div className="mt-3 max-w-[10rem] text-center sm:max-w-none">
+                    <p className="text-xs font-extrabold leading-5 text-slate-800">{lesson.title}</p>
                     <p className="text-[11px] font-semibold text-slate-500">{lesson.skill}</p>
                   </div>
                 </div>

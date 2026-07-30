@@ -32,6 +32,10 @@
 
 :root {
   color-scheme: light;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 @theme inline {
@@ -55,6 +59,8 @@
       linear-gradient(180deg, #fffaf0 0%, #fff6fb 50%, #f7fbff 100%);
     color: #1e293b;
     font-family: var(--font-fredoka), sans-serif;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
   }
 
   button {
@@ -80,8 +86,12 @@
     @apply inline-flex min-h-14 items-center justify-center gap-2 rounded-[1.4rem] border-b-4 px-5 py-3 text-base font-extrabold shadow-lg transition-all active:translate-y-[4px] active:border-b-0;
   }
 
+  .touch-card {
+    @apply min-h-12 min-w-12;
+  }
+
   .stat-chip {
-    @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold shadow-sm;
+    @apply inline-flex min-h-12 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold shadow-sm;
   }
 
   .tab-button {

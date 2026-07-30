@@ -18,7 +18,7 @@ export const FocusLessonShell = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="fixed inset-0 z-50 flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffaf0] select-none">
+    <div className="fixed inset-0 z-50 flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffaf0] select-none" style={{ paddingTop: "var(--safe-top)", paddingBottom: "var(--safe-bottom)" }}>
       {/* Top Bar - Clean & Compact Mobile Header */}
       <header className="flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b border-amber-200/60 bg-white/90 px-4 backdrop-blur-md">
         <button

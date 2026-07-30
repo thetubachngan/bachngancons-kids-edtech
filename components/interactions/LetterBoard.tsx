@@ -9,12 +9,14 @@ export const LetterBoard = ({
   letterBank,
   onComplete,
   onWrong,
+  onPreviewLetter,
   disabled,
 }: {
   answer: string;
   letterBank: string[];
   onComplete: () => void;
   onWrong: () => void;
+  onPreviewLetter?: (letter: string) => void;
   disabled?: boolean;
 }) => {
   const normalizedAnswer = normalize(answer);
@@ -98,9 +100,14 @@ export const LetterBoard = ({
               onDrop={(e) => {
                 e.preventDefault();
                 const letter = e.dataTransfer.getData("text/plain");
+                onPreviewLetter?.(letter);
                 placeLetter(letter, index);
               }}
-              onClick={() => activeLetter && placeLetter(activeLetter, index)}
+              onClick={() => {
+                if (!activeLetter) return;
+                onPreviewLetter?.(activeLetter);
+                placeLetter(activeLetter, index);
+              }}
               className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/50 text-xl font-black text-slate-800 shadow-inner cursor-pointer"
             >
               {slots[index] || ""}
@@ -126,9 +133,13 @@ export const LetterBoard = ({
             onDragStart={(e: DragEvent<HTMLButtonElement>) => {
               e.dataTransfer.setData("text/plain", letter);
               setActiveLetter(letter);
+              onPreviewLetter?.(letter);
             }}
             onDragEnd={() => setActiveLetter(null)}
-            onClick={() => placeLetter(letter)}
+            onClick={() => {
+              onPreviewLetter?.(letter);
+              placeLetter(letter);
+            }}
             className="flex h-12 items-center justify-center rounded-xl border-2 border-b-4 border-slate-200 bg-white text-xl font-black text-slate-800 shadow-sm transition active:translate-y-[2px] active:border-b-2"
           >
             {letter}

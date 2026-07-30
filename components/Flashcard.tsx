@@ -51,7 +51,7 @@ export const Flashcard = ({
   };
 
   return (
-    <div className="perspective-1000 h-[27rem] w-full cursor-pointer" onClick={() => setIsFlipped((prev) => !prev)}>
+    <div className="perspective-1000 h-[24rem] w-full cursor-pointer sm:h-[27rem]" onClick={() => setIsFlipped((prev) => !prev)}>
       <motion.div
         className="preserve-3d relative h-full w-full"
         animate={{ rotateY: isFlipped ? 180 : 0 }}

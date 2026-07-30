@@ -15,9 +15,10 @@ const sanitizeWord = (word: string) => word.replace(/\s+/g, "").toUpperCase();
 
 const buildLetterBank = (answer: string) => {
   const baseLetters = sanitizeWord(answer).split("");
-  const fillerPool = ["A", "E", "I", "O", "U", "R", "S", "T", "L", "N"];
+  const fillerPool = ["B", "C", "D", "F", "G", "H", "K", "M", "P", "Y", "Z"];
   const fillerCount = Math.max(2, Math.min(4, 8 - baseLetters.length));
-  const filler = fillerPool.slice(0, fillerCount);
+  const answerLetters = [...new Set(baseLetters)];
+  const filler = fillerPool.filter((letter) => !answerLetters.includes(letter)).slice(0, fillerCount);
   const combined = [...baseLetters, ...filler];
   const pivot = combined.length ? sanitizeWord(answer).length % combined.length : 0;
 
@@ -82,6 +83,7 @@ const buildExplorerWordLesson = (unitId: string, topicTitle: string, chunkIndex:
       targetWord: primary.word,
       answer: dragAnswer,
       letterBank: buildLetterBank(primary.word),
+      revealWord: false,
     },
   ];
 

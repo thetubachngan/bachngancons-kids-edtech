@@ -199,6 +199,16 @@ export const CoreQuizEngine = ({
           disabled={answered || isResolvingChoice}
           onComplete={handleCorrect}
           onWrong={handleWrong}
+          onPreviewLetter={(letter) => {
+            speak({
+              text: letter,
+              kind: "word",
+              rate: 0.36,
+              source: "lesson",
+              mode: "manual",
+              interrupt: "all",
+            });
+          }}
         />
       );
     }

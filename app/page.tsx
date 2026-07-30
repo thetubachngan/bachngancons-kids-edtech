@@ -38,10 +38,6 @@ function AppShell() {
       .filter(Boolean) as string[];
   };
 
-  useEffect(() => {
-    const warmLessons = curriculum.units.flatMap((unit) => unit.lessons).slice(0, 3);
-    void preloadAudio(warmLessons.flatMap((lesson) => collectLessonAudioSources(lesson.id)));
-  }, []);
 
   useEffect(() => {
     if (!activeLesson) {
@@ -61,20 +57,18 @@ function AppShell() {
   const completedLessonCount = state.completedLessonIds.length;
   const unlockedLessonCount = state.unlockedLessonIds.length;
 
-  const startLesson = async (lessonId: string) => {
+  const startLesson = (lessonId: string) => {
     if (isPreparingLesson) {
       return;
     }
 
     setIsPreparingLesson(true);
-    try {
-      await preloadAudio(collectLessonAudioSources(lessonId));
-      dispatch({ type: "START_LESSON", lessonId });
-      setActiveLessonId(lessonId);
-      setLessonProgress(0);
-    } finally {
+    dispatch({ type: "START_LESSON", lessonId });
+    setActiveLessonId(lessonId);
+    setLessonProgress(0);
+    void preloadAudio(collectLessonAudioSources(lessonId)).finally(() => {
       setIsPreparingLesson(false);
-    }
+    });
   };
 
   const exitLesson = () => {
@@ -98,10 +92,10 @@ function AppShell() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-pink-50 to-sky-50 text-slate-900">
       {!activeLesson ? (
-        <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
-          <section className="rounded-[2rem] bg-white/80 p-5 shadow-xl backdrop-blur-sm sm:p-6">
-            <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-              <div className="space-y-4">
+        <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-5 px-4 py-4 sm:px-6 sm:py-6">
+          <section className="rounded-[1.75rem] bg-white/85 p-4 shadow-xl backdrop-blur-sm sm:rounded-[2rem] sm:p-6">
+            <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+              <div className="space-y-3">
                 <p className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-700">
                   <Sparkles className="h-4 w-4" />
                   Bee & Cat English

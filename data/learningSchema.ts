@@ -51,6 +51,7 @@ export type LessonStep =
       targetWord: string;
       answer: string;
       letterBank: string[];
+      revealWord?: boolean;
     }
   | {
       id: string;

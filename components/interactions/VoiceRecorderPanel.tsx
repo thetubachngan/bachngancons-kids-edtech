@@ -39,7 +39,7 @@ export const VoiceRecorderPanel = ({
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [status, setStatus] = useState<"idle" | "listening" | "correct" | "wrong" | "unsupported">("idle");
+  const [status, setStatus] = useState<"idle" | "listening" | "correct" | "wrong">("idle");
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const completedRef = useRef(false);
@@ -52,7 +52,6 @@ export const VoiceRecorderPanel = ({
 
   useEffect(() => {
     if (!RecognitionCtor) {
-      setStatus("unsupported");
       return;
     }
 
@@ -93,7 +92,7 @@ export const VoiceRecorderPanel = ({
 
     recognition.onerror = () => {
       setError("Thiết bị này chưa hỗ trợ hoặc đang chặn micro tạm thời.");
-      setStatus("unsupported");
+      setStatus("wrong");
       setIsListening(false);
     };
 
@@ -121,7 +120,7 @@ export const VoiceRecorderPanel = ({
   const toggleListening = () => {
     const recognition = recognitionRef.current;
     if (!recognition) {
-      setStatus("unsupported");
+      setStatus("wrong");
       setError("Thiết bị này chưa hỗ trợ micro. Hãy thử trên trình duyệt khác hoặc cấp quyền micro.");
       return;
     }
@@ -164,10 +163,10 @@ export const VoiceRecorderPanel = ({
           animate={isListening ? { scale: [1, 1.08, 1] } : { scale: 1 }}
           onClick={toggleListening}
           className={`flex h-20 w-20 items-center justify-center rounded-full shadow-xl ${
-            isListening ? "bg-pink-500 text-white" : status === "unsupported" ? "bg-slate-200 text-slate-400" : "bg-emerald-500 text-white"
+            isListening ? "bg-pink-500 text-white" : !RecognitionCtor ? "bg-slate-200 text-slate-400" : "bg-emerald-500 text-white"
           }`}
           aria-label={buttonLabel}
-          disabled={status === "unsupported" && !RecognitionCtor}
+          disabled={!RecognitionCtor}
         >
           {isListening ? <Mic className="h-8 w-8" /> : <MicOff className="h-8 w-8" />}
         </motion.button>

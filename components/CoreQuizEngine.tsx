@@ -218,6 +218,8 @@ export const CoreQuizEngine = ({
         expectedText={currentStep.expectedText}
         hint={currentStep.helperText}
         level={lesson.level}
+        sampleText={currentStep.expectedAudioText ?? currentStep.expectedText}
+        sampleAudioSrc={currentStep.expectedAudioSrc}
         onComplete={handleCorrect}
       />
     );

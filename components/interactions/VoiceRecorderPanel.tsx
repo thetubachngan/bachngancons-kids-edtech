@@ -1,5 +1,7 @@
 "use client";
 
+import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
+import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Mic, MicOff, Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -26,7 +28,24 @@ type RecognitionWindow = Window & {
   webkitSpeechRecognition?: SpeechRecognitionCtor;
 };
 
+type Engine = "native" | "browser" | "unsupported";
+
 const normalize = (text: string) => text.replace(/[^a-z0-9\s]/gi, "").replace(/\s+/g, " ").trim().toLowerCase();
+const nativePlatform = Capacitor.isNativePlatform();
+
+const extractNativeTranscript = (payload: unknown) => {
+  if (!payload || typeof payload !== "object") {
+    return "";
+  }
+
+  const maybeMatches = payload as { matches?: string[]; value?: string; transcript?: string };
+
+  if (Array.isArray(maybeMatches.matches)) {
+    return maybeMatches.matches.join(" ").trim();
+  }
+
+  return maybeMatches.value ?? maybeMatches.transcript ?? "";
+};
 
 export const VoiceRecorderPanel = ({
   expectedText,
@@ -37,11 +56,13 @@ export const VoiceRecorderPanel = ({
   onComplete: () => void;
   hint?: string;
 }) => {
+  const [engine, setEngine] = useState<Engine>("unsupported");
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [status, setStatus] = useState<"idle" | "listening" | "correct" | "wrong">("idle");
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const nativeListenerRef = useRef<PluginListenerHandle | null>(null);
   const completedRef = useRef(false);
 
   const RecognitionCtor = useMemo(() => {
@@ -51,73 +72,188 @@ export const VoiceRecorderPanel = ({
   }, []);
 
   useEffect(() => {
-    if (!RecognitionCtor) {
-      return;
-    }
+    let cancelled = false;
 
-    const recognition = new RecognitionCtor();
-    recognition.lang = "en-US";
-    recognition.interimResults = true;
-    recognition.continuous = false;
+    const setupNative = async () => {
+      if (!nativePlatform) {
+        return false;
+      }
 
-    recognition.onstart = () => {
-      completedRef.current = false;
-      setError(null);
-      setStatus("listening");
-      setIsListening(true);
+      try {
+        const availableResult = (await SpeechRecognition.available()) as boolean | { available?: boolean };
+        const available = typeof availableResult === "boolean" ? availableResult : Boolean(availableResult?.available);
+        if (!available) {
+          return false;
+        }
+
+        nativeListenerRef.current = await SpeechRecognition.addListener("partialResults", (payload) => {
+          const text = extractNativeTranscript(payload);
+          setTranscript(text);
+          if (normalize(text) === normalize(expectedText)) {
+            completedRef.current = true;
+            setStatus("correct");
+            setIsListening(false);
+            void SpeechRecognition.stop();
+            onComplete();
+          }
+        });
+
+        if (!cancelled) {
+          setEngine("native");
+        }
+
+        return true;
+      } catch {
+        return false;
+      }
     };
 
-    recognition.onend = () => {
-      setIsListening(false);
-      if (completedRef.current) {
+    const setupBrowser = () => {
+      if (!RecognitionCtor) {
+        return false;
+      }
+
+      const recognition = new RecognitionCtor();
+      recognition.lang = "en-US";
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      recognition.onstart = () => {
+        completedRef.current = false;
+        setError(null);
+        setStatus("listening");
+        setIsListening(true);
+      };
+      recognition.onend = () => {
+        setIsListening(false);
+        if (completedRef.current) {
+          return;
+        }
+
+        const normalizedTranscript = normalize(transcript);
+        if (!normalizedTranscript) {
+          setStatus("idle");
+          return;
+        }
+
+        if (normalizedTranscript === normalize(expectedText)) {
+          completedRef.current = true;
+          setStatus("correct");
+          onComplete();
+          return;
+        }
+
+        setStatus("wrong");
+        setError("Con nói chưa đúng lắm, thử lại nhé.");
+      };
+      recognition.onerror = () => {
+        setError("Thiết bị này chưa hỗ trợ hoặc đang chặn micro tạm thời.");
+        setStatus("wrong");
+        setIsListening(false);
+      };
+      recognition.onresult = (event) => {
+        const text = Array.from(event.results)
+          .map((result) => result[0]?.transcript ?? "")
+          .join(" ");
+        setTranscript(text);
+        if (normalize(text) === normalize(expectedText)) {
+          completedRef.current = true;
+          setStatus("correct");
+          recognition.stop();
+          onComplete();
+        }
+      };
+
+      recognitionRef.current = recognition;
+      if (!cancelled) {
+        setEngine("browser");
+      }
+
+      return true;
+    };
+
+    void (async () => {
+      const nativeReady = await setupNative();
+      if (nativeReady) {
         return;
       }
 
-      const normalizedTranscript = normalize(transcript);
-      if (!normalizedTranscript) {
-        setStatus("idle");
-        return;
+      const browserReady = setupBrowser();
+      if (!browserReady && !cancelled) {
+        setEngine("unsupported");
       }
-
-      if (normalizedTranscript === normalize(expectedText)) {
-        completedRef.current = true;
-        setStatus("correct");
-        onComplete();
-        return;
-      }
-
-      setStatus("wrong");
-      setError("Con nói chưa đúng lắm, thử lại nhé.");
-    };
-
-    recognition.onerror = () => {
-      setError("Thiết bị này chưa hỗ trợ hoặc đang chặn micro tạm thời.");
-      setStatus("wrong");
-      setIsListening(false);
-    };
-
-    recognition.onresult = (event) => {
-      const text = Array.from(event.results)
-        .map((result) => result[0]?.transcript ?? "")
-        .join(" ");
-      setTranscript(text);
-
-      if (normalize(text) === normalize(expectedText)) {
-        completedRef.current = true;
-        setStatus("correct");
-        recognition.stop();
-      }
-    };
-
-    recognitionRef.current = recognition;
+    })();
 
     return () => {
-      recognition.abort();
+      cancelled = true;
+      recognitionRef.current?.abort();
       recognitionRef.current = null;
+      void nativeListenerRef.current?.remove();
+      nativeListenerRef.current = null;
+      if (nativePlatform) {
+        void SpeechRecognition.stop();
+      }
     };
   }, [RecognitionCtor, expectedText, onComplete, transcript]);
 
-  const toggleListening = () => {
+  const ensureNativePermission = async () => {
+    try {
+      const permissions = (await SpeechRecognition.checkPermissions()) as { speechRecognition?: string; microphone?: string };
+      const speechGranted = permissions?.speechRecognition === "granted" || permissions?.microphone === "granted";
+      if (speechGranted) {
+        return true;
+      }
+
+      const request = (await SpeechRecognition.requestPermissions()) as { speechRecognition?: string; microphone?: string };
+      return request?.speechRecognition === "granted" || request?.microphone === "granted";
+    } catch {
+      return false;
+    }
+  };
+
+  const toggleListening = async () => {
+    setError(null);
+
+    if (engine === "unsupported") {
+      setStatus("wrong");
+      setError("Thiết bị này chưa hỗ trợ micro hoặc chưa cấp quyền micro.");
+      return;
+    }
+
+    if (engine === "native") {
+      if (isListening) {
+        setIsListening(false);
+        await SpeechRecognition.stop();
+        return;
+      }
+
+      const granted = await ensureNativePermission();
+      if (!granted) {
+        setStatus("wrong");
+        setError("Ứng dụng chưa được cấp quyền micro trên điện thoại.");
+        return;
+      }
+
+      completedRef.current = false;
+      setTranscript("");
+      setStatus("listening");
+      setIsListening(true);
+
+      try {
+        await SpeechRecognition.start({
+          language: "en-US",
+          maxResults: 1,
+          partialResults: true,
+          popup: false,
+        });
+      } catch {
+        setStatus("wrong");
+        setIsListening(false);
+        setError("Không thể bắt đầu ghi âm trên điện thoại. Hãy thử lại.");
+      }
+      return;
+    }
+
     const recognition = recognitionRef.current;
     if (!recognition) {
       setStatus("wrong");
@@ -131,7 +267,6 @@ export const VoiceRecorderPanel = ({
     }
 
     setTranscript("");
-    setError(null);
     setStatus("idle");
 
     try {
@@ -161,12 +296,13 @@ export const VoiceRecorderPanel = ({
         <motion.button
           whileTap={{ scale: 0.96 }}
           animate={isListening ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-          onClick={toggleListening}
+          onClick={() => {
+            void toggleListening();
+          }}
           className={`flex h-20 w-20 items-center justify-center rounded-full shadow-xl ${
-            isListening ? "bg-pink-500 text-white" : !RecognitionCtor ? "bg-slate-200 text-slate-400" : "bg-emerald-500 text-white"
+            isListening ? "bg-pink-500 text-white" : engine === "unsupported" ? "bg-slate-200 text-slate-400" : "bg-emerald-500 text-white"
           }`}
           aria-label={buttonLabel}
-          disabled={!RecognitionCtor}
         >
           {isListening ? <Mic className="h-8 w-8" /> : <MicOff className="h-8 w-8" />}
         </motion.button>

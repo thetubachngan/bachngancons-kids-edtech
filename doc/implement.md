@@ -1,5 +1,5 @@
-# KẾ HOẠCH TRIỂN KHAI VÀ THIẾT KẾ CHI TIẾT (NÂNG CẤP MÔ HÌNH DUOLINGO LEARNING PATH & ENRICHED LESSON ENGINE) [UID: IMP-TITLE]
-## ỨNG DỤNG WEB HỌC TIẾNG ANH CHO TRẺ EM (BACH NGAN CONS KIDS EDTECH APP) [UID: IMP-SUBTITLE]
+# KẾ HOẠCH TRIỂN KHAI VÀ THIẾT KẾ CHI TIẾT (NÂNG CẤP MÔ HÌNH DUOLINGO LEARNING PATH & GIÁO ÁN LỚP 2 CAMBRIDGE) [UID: IMP-TITLE]
+## ỨNG DỤNG WEB HỌC TIẾNG ANH CHO TRẺ EM (PENGUIN ENGLISH - BACH NGAN CONS KIDS EDTECH APP) [UID: IMP-SUBTITLE]
 
 ---
 
@@ -10,7 +10,8 @@
 | `[UID: IMP-SEC-I]` | **I. Mô hình Kiến trúc mới (Duolingo ABC & Lingokids Style)** | Mục lớn |
 | ├── `[UID: IMP-SEC-I-1]` | ├── 1. Bản đồ Học tập Đường mòn Ziczac SVG (`LearningMap`) | Tiểu mục |
 | ├── `[UID: IMP-SEC-I-2]` | ├── 2. Chế độ Học tập Trung ("Mobile Zero-Scroll Focus Shell") | Tiểu mục |
-| └── `[UID: IMP-SEC-I-3]` | └── 3. Luồng Học tập Phong phú 7 Kỹ năng (`CoreQuizEngine`) | Tiểu mục |
+| ├── `[UID: IMP-SEC-I-3]` | ├── 3. Luồng Học tập Phong phú 7 Kỹ năng (`CoreQuizEngine`) | Tiểu mục |
+| └── `[UID: IMP-SEC-I-4]` | └── 4. Thanh Chọn Độ Tuổi & Cấp Độ Linh Hoạt (`Age Level Selector Tabs`) | Tiểu mục |
 | `[UID: IMP-SEC-II]` | **II. Phân chia Lộ trình & 7 Dạng Bài Học Tương Tác** | Mục lớn |
 | ├── `[UID: IMP-SEC-II-1]` | ├── 1. Cấp độ 1: Explorer Path (5-6 tuổi - Mầm non & Lớp 1) | Tiểu mục |
 | ├── `[UID: IMP-SEC-II-2]` | ├── 2. Cấp độ 2: Builder Trail (7-8 tuổi - Lớp 2 & Lớp 3) | Tiểu mục |
@@ -27,7 +28,11 @@
 | ├── `[UID: IMP-SEC-V-2]` | ├── 2. Zero-Latency Response & Lesson Pre-decoding | Tiểu mục |
 | ├── `[UID: IMP-SEC-V-3]` | ├── 3. Thu âm & Nhận diện Giọng nói (`VoiceRecorderPanel.tsx`) | Tiểu mục |
 | └── `[UID: IMP-SEC-V-4]` | └── 4. Hệ thống Thưởng & Linh vật Ong Bee (`components/gamification/`) | Tiểu mục |
-| `[UID: IMP-SEC-VI]` | **VI. Cấu trúc Thư mục & Kế hoạch Chi tiết Triển khai** | Mục lớn |
+| `[UID: IMP-SEC-VI]` | **VI. Kế hoạch Nâng cấp Giáo trình Lớp 2 (Cambridge Pre-A1 Starters)** | Mục lớn |
+| ├── `[UID: IMP-SEC-VI-1]` | ├── 1. Đánh giá Chuyên môn & Tăng độ khó theo cấp độ Lớp 2 | Tiểu mục |
+| ├── `[UID: IMP-SEC-VI-2]` | ├── 2. Bổ sung Bộ Cấu trúc Câu Giao tiếp & Phonics Đánh vần | Tiểu mục |
+| └── `[UID: IMP-SEC-VI-3]` | └── 3. Luồng Tương tác Ghép Câu & Luyện Nói Phản Xạ | Tiểu mục |
+| `[UID: IMP-SEC-VII]` | **VII. Cấu trúc Thư mục & Kế hoạch Chi tiết Triển khai** | Mục lớn |
 
 ---
 
@@ -37,10 +42,6 @@
    * Trực quan hóa tiến trình bằng đường nối cong SVG (`<svg>` curved dotted path) nối mượt giữa các Node tròn 3D.
    * **Linh vật Ong Bee 🐝 Dẫn đường**: Đặt chú Ong Bee đứng cạnh Nút bài học hiện tại (Current Node) với hoạt ảnh pulse và bóng thoại kích thích bé bấm chọn.
    * **Node Rương Kho Báu (Unit Chest Node)**: Cuối mỗi Cấp độ (Unit), bổ sung Nút Rương Kho Báu 🌟 để bé ôn tập tổng hợp toàn bộ từ vựng và nhận thưởng đặc biệt.
-   * Các Node trạng thái 3D:
-     * `completed`: Đã hoàn thành (màu vàng kim/xanh lá 3D, checkmark, 3 sao đạt được, cho phép đấu lại).
-     * `current`: Bài học hiện tại (nút vàng nổi bật, vòng hào quang pulsing ring 3D, Ong Bee đứng đón).
-     * `locked`: Chưa mở khóa (nút xám dịu, biểu tượng khóa an toàn).
 
 2. **Chế độ Học tập Trung Cố định Viewport ("Mobile Zero-Scroll Focus Shell")** [UID: IMP-SEC-I-2]:
    * Cố định màn hình bài học `h-[100dvh]` với `overflow-hidden`, triệt tiêu thanh cuộn dọc.
@@ -49,6 +50,13 @@
 3. **Luồng Học tập 7 Dạng Tương tác & Bottom Sheet Phản hồi (`CoreQuizEngine`)** [UID: IMP-SEC-I-3]:
    * Single Hero Card kết hợp Mascot Ong Bee 🐝 và các dạng bài tương tác 1-chạm.
    * Bottom Sheet phản hồi trượt mượt từ bên dưới (Slide-up drawer): Thanh màu xanh lá khi trả lời đúng kèm âm thanh chúc mừng; Thanh màu cam khi làm lại kèm lời giải thích thân thiện.
+
+4. **Thanh Chọn Độ Tuổi & Cấp Độ Linh Hoạt (`Age Level Selector Tabs`)** [UID: IMP-SEC-I-4]:
+   * Đặt 3 Tab chọn Cấp độ 3D nổi bật ở trên cùng Bản đồ Học tập:
+     * 🟢 **Explorer (5-6 tuổi)** - Mầm non & Lớp 1
+     * 🔵 **Builder (7-8 tuổi)** - Lớp 2 & Lớp 3
+     * 🟠 **Challenger (9+ tuổi)** - Lớp 4 trở lên
+   * **Tự động mở bài đầu tiên ở mỗi Độ tuổi**: Bé Lớp 2 khi chọn sang Tab Builder 7-8 tuổi sẽ có sẵn Bài 1 được mở khóa (`unlocked`), không cần phải cày hết bài mầm non 5 tuổi mới được mở bài Lớp 2!
 
 ---
 
@@ -93,23 +101,36 @@ Bảo tồn 100% 166 từ vựng và 10+ scenario hội thoại tại `data/engl
 
 ---
 
-### VI. CẤU TRÚC THƯ MỤC & CÁC CẤU PHẦN CHÍNH TRONG MÃ NGUỒN [UID: IMP-SEC-VI]
+### VI. KẾ HOẠCH NÂNG CẤP GIÁO TRÌNH LỚP 2 (CAMBRIDGE PRE-A1 STARTERS) [UID: IMP-SEC-VI]
+
+1. **Đánh giá Chuyên môn & Tăng độ khó Cấp độ Lớp 2 (`Builder Trail`)** [UID: IMP-SEC-VI-1]:
+   * Chuyển trọng tâm từ nhận biết từ lẻ đơn giản (`Explorer`) sang **Cấu trúc câu hoàn chỉnh (Sentence Patterns)** và **Đánh vần Phonics chuẩn Cambridge**.
+2. **Bổ sung Bộ Cấu trúc Câu Giao tiếp & Phonics** [UID: IMP-SEC-VI-2]:
+   * Mẫu câu mô tả: *"What is this?"* ➔ *"It is a green apple."*
+   * Mẫu câu hỏi đáp số lượng: *"How many cats?"* ➔ *"There are two cats."*
+   * Mẫu câu sở thích & khả năng: *"I like milk"*, *"I can swim"*.
+3. **Tương tác Ghép Câu & Luyện Nói Phản Xạ (`Sentence Builder & Voice Challenge`)** [UID: IMP-SEC-VI-3]:
+   * Yêu cầu bé ghép mảng từ xáo trộn thành câu hoàn chỉnh và thu âm phát âm trọn câu.
+
+---
+
+### VII. CẤU TRÚC THƯ MỤC & CÁC CẤU PHẦN CHÍNH TRONG MÃ NGU N [UID: IMP-SEC-VII]
 
 ```text
 ├── app/
-│   ├── page.tsx                         # AppShell kết nối LearningMap, FocusLessonShell, CoreQuizEngine & Store
+│   ├── page.tsx                         # AppShell Penguin English kết nối LearningMap, FocusLessonShell, CoreQuizEngine & Store
 │   └── globals.css                      # Custom CSS utilities, animation, styling 3D buttons & node paths
 ├── components/
-│   ├── LearningMap.tsx                  # Bản đồ bài học đường mòn ziczac SVG 3 Cấp độ + Mascot Bee + Unit Chest Node
+│   ├── LearningMap.tsx                  # Bản đồ bài học ziczac SVG + Age Level Selector Tabs + Mascot Bee + Unit Chest Node
 │   ├── CoreQuizEngine.tsx               # Quiz Engine hỗ trợ 7 dạng bài học & Duolingo Bottom Sheet
 │   ├── lesson/
 │   │   └── FocusLessonShell.tsx         # Giao diện học tập trung "Mobile Zero-Scroll 100dvh"
 │   ├── interactions/
 │   │   ├── LetterBoard.tsx              # Ghép chữ cái chính tả
 │   │   ├── TapChoiceGrid.tsx            # Lưới chọn đáp án 2x2
-│   │   ├── PairMatchBoard.tsx           # [NEW] Ghép thẻ từ & nghĩa Duolingo Match Madness
-│   │   ├── SentenceBuilderBoard.tsx     # [NEW] Ghép câu / cụm từ
-│   │   ├── FlashcardPreview.tsx         # [NEW] Thẻ lật 3D khám phá từ vựng
+│   │   ├── PairMatchBoard.tsx           # Ghép thẻ từ & nghĩa Duolingo Match Madness
+│   │   ├── SentenceBuilderBoard.tsx     # Ghép câu / cụm từ Lớp 2
+│   │   ├── FlashcardPreview.tsx         # Thẻ lật 3D khám phá từ vựng
 │   │   └── VoiceRecorderPanel.tsx       # Panel thu âm & nhận diện giọng nói
 │   └── gamification/
 │       ├── Mascot.tsx                   # Mascot Ong Bee với 4 trạng thái cảm xúc
@@ -117,7 +138,7 @@ Bảo tồn 100% 166 từ vựng và 10+ scenario hội thoại tại `data/engl
 │       └── StreakBanner.tsx             # Badge chuỗi ngày học
 ├── data/
 │   ├── learningSchema.ts                # TypeScript interfaces mở rộng 7 step types
-│   ├── curriculum.ts                    # Generator bài học phong phú đa dạng bài học
+│   ├── curriculum.ts                    # Generator bài học nâng cấp cho bé Lớp 2 & 3 Độ tuổi
 │   ├── audioManifest.ts                 # 100% Static MP3 audio manifest
 │   └── englishData.ts                   # 166 từ vựng & kịch bản hội thoại chuẩn hóa
 └── store/

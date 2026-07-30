@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useReducer, useState } from "react";
 
-import { curriculum, getNextLessonId, orderedLessons } from "@/data/curriculum";
+import { curriculum, getNextLessonId } from "@/data/curriculum";
 
 type LessonStat = {
   attempts: number;
@@ -41,8 +41,14 @@ const yesterdayKey = () => {
   return date.toISOString().slice(0, 10);
 };
 
+const initialUnlockedLessons = [
+  curriculum.units[0]?.lessons[0]?.id,
+  curriculum.units[1]?.lessons[0]?.id,
+  curriculum.units[2]?.lessons[0]?.id,
+].filter(Boolean) as string[];
+
 const initialState: LearningState = {
-  unlockedLessonIds: orderedLessons[0] ? [orderedLessons[0].id] : [],
+  unlockedLessonIds: initialUnlockedLessons,
   completedLessonIds: [],
   currentLessonId: null,
   streakDays: 1,

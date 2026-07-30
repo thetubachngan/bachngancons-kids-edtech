@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.bachngancons.kidsenglish",
-  appName: "BachNganCons Kids English",
+  appName: "Penguin English",
   webDir: "out",
   server: {
     url: "https://tienganh.bachngancons.com",

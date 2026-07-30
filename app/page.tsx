@@ -91,15 +91,14 @@ function AppShell() {
   };
 
   const handleContinueFromReward = () => {
-    const nextLessonId = pendingNextLessonId;
     setRewardOpen(false);
-    setPendingNextLessonId(null);
 
-    if (nextLessonId) {
-      startLesson(nextLessonId);
+    if (pendingNextLessonId) {
+      setActiveLessonId(null);
       return;
     }
 
+    setPendingNextLessonId(null);
     setActiveLessonId(null);
   };
 
@@ -112,9 +111,9 @@ function AppShell() {
               <div className="space-y-3">
                 <p className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-700">
                   <Sparkles className="h-4 w-4" />
-                  Bee & Cat English
+                  Penguin English 🐧
                 </p>
-                <h1 className="text-3xl font-black leading-tight sm:text-5xl">Học tiếng Anh cùng Bee & Cat</h1>
+                <h1 className="text-3xl font-black leading-tight sm:text-5xl">Học tiếng Anh cùng Penguin & Bee</h1>
                 <p className="max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
                   Chọn một bài học trên bản đồ, bấm nghe từ và để bé học theo từng bước thật rõ ràng, vui nhộn.
                 </p>
@@ -152,6 +151,8 @@ function AppShell() {
             completedLessonIds={state.completedLessonIds}
             currentLessonId={state.currentLessonId}
             unlockedLessonIds={state.unlockedLessonIds}
+            focusLessonId={pendingNextLessonId}
+            onFocusConsumed={() => setPendingNextLessonId(null)}
             onStartLesson={startLesson}
           />
         </main>

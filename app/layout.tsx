@@ -10,7 +10,7 @@ const fredoka = Fredoka({
 });
 
 export const metadata: Metadata = {
-  title: "Kids English Adventure",
+  title: "Penguin English",
   description: "Nền tảng học tiếng Anh tương tác cho trẻ 5-9 tuổi với Learning Map, gamification và lesson engine.",
   icons: {
     icon: "/icon.png",

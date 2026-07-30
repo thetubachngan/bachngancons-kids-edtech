@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Lock, Star, Play, Check } from "lucide-react";
 
@@ -11,14 +12,41 @@ export const LearningMap = ({
   completedLessonIds,
   currentLessonId,
   unlockedLessonIds,
+  focusLessonId,
+  onFocusConsumed,
   onStartLesson,
 }: {
   curriculum: Curriculum;
   completedLessonIds: string[];
   currentLessonId: string | null;
   unlockedLessonIds: string[];
+  focusLessonId?: string | null;
+  onFocusConsumed?: () => void;
   onStartLesson: (lessonId: string) => void;
 }) => {
+  const lastFocusedLessonRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!focusLessonId || focusLessonId === lastFocusedLessonRef.current) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const lessonNode = document.getElementById(`lesson-node-${focusLessonId}`);
+      if (!lessonNode) {
+        return;
+      }
+
+      lastFocusedLessonRef.current = focusLessonId;
+      lessonNode.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+      onFocusConsumed?.();
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [focusLessonId, onFocusConsumed]);
+
   return (
     <div className="mx-auto w-full max-w-xl select-none px-3 pb-[calc(6rem+var(--safe-bottom))] sm:px-4">
       {curriculum.units.map((unit) => (
@@ -45,6 +73,7 @@ export const LearningMap = ({
               return (
                 <div
                   key={lesson.id}
+                  id={`lesson-node-${lesson.id}`}
                   className="flex w-full flex-col items-center"
                   style={{ transform: `translateX(${offsetX}px)` }}
                 >
@@ -84,6 +113,17 @@ export const LearningMap = ({
                       </div>
                     )}
                   </motion.button>
+
+                  {nodeState === "current" ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-3 flex items-center gap-2 rounded-2xl bg-white px-3 py-2 text-left shadow-md"
+                    >
+                      <span className="text-2xl">🐝</span>
+                      <span className="text-[11px] font-black leading-4 text-amber-700">Mở bài mới nào! 🎁</span>
+                    </motion.div>
+                  ) : null}
 
                   {/* Lesson Label */}
                   <div className="mt-3 max-w-[10rem] text-center sm:max-w-none">

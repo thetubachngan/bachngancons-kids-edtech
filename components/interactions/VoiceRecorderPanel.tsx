@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Mic, MicOff, Play, Square, Volume2 } from "lucide-react";
+import { Mic, MicOff, Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-type RecognitionAlternative = { transcript?: string };
-type RecognitionResultLike = { 0?: RecognitionAlternative };
+type RecognitionAlternative = { transcript?: string; confidence?: number };
+type RecognitionResultLike = { 0?: RecognitionAlternative; isFinal?: boolean };
 type RecognitionEventLike = { results: ArrayLike<RecognitionResultLike> };
 type SpeechRecognitionLike = {
   lang: string;
@@ -16,6 +16,7 @@ type SpeechRecognitionLike = {
   onerror: (() => void) | null;
   onresult: ((event: RecognitionEventLike) => void) | null;
   start: () => void;
+  stop: () => void;
   abort: () => void;
 };
 type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
@@ -23,7 +24,6 @@ type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 type RecognitionWindow = Window & {
   SpeechRecognition?: SpeechRecognitionCtor;
   webkitSpeechRecognition?: SpeechRecognitionCtor;
-  MediaRecorder?: typeof MediaRecorder;
 };
 
 const normalize = (text: string) => text.replace(/[^a-z0-9\s]/gi, "").replace(/\s+/g, " ").trim().toLowerCase();
@@ -38,16 +38,11 @@ export const VoiceRecorderPanel = ({
   hint?: string;
 }) => {
   const [isListening, setIsListening] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [status, setStatus] = useState<"idle" | "listening" | "correct" | "wrong" | "unsupported">("idle");
   const [error, setError] = useState<string | null>(null);
-  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
-  const [mockValue, setMockValue] = useState("");
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const completedRef = useRef(false);
 
   const RecognitionCtor = useMemo(() => {
     if (typeof window === "undefined") return null;
@@ -55,19 +50,11 @@ export const VoiceRecorderPanel = ({
     return anyWindow.SpeechRecognition ?? anyWindow.webkitSpeechRecognition ?? null;
   }, []);
 
-  const hasMediaRecorder = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const anyWindow = window as RecognitionWindow;
-    return Boolean(anyWindow.MediaRecorder && navigator.mediaDevices?.getUserMedia);
-  }, []);
-
-  const hasFileCapture = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return true;
-  }, []);
-
   useEffect(() => {
-    if (!RecognitionCtor) return;
+    if (!RecognitionCtor) {
+      setStatus("unsupported");
+      return;
+    }
 
     const recognition = new RecognitionCtor();
     recognition.lang = "en-US";
@@ -75,21 +62,51 @@ export const VoiceRecorderPanel = ({
     recognition.continuous = false;
 
     recognition.onstart = () => {
+      completedRef.current = false;
       setError(null);
+      setStatus("listening");
       setIsListening(true);
     };
-    recognition.onend = () => setIsListening(false);
+
+    recognition.onend = () => {
+      setIsListening(false);
+      if (completedRef.current) {
+        return;
+      }
+
+      const normalizedTranscript = normalize(transcript);
+      if (!normalizedTranscript) {
+        setStatus("idle");
+        return;
+      }
+
+      if (normalizedTranscript === normalize(expectedText)) {
+        completedRef.current = true;
+        setStatus("correct");
+        onComplete();
+        return;
+      }
+
+      setStatus("wrong");
+      setError("Con nói chưa đúng lắm, thử lại nhé.");
+    };
+
     recognition.onerror = () => {
-      setError("Thiết bị này không thể nhận diện giọng nói lúc này. Bé có thể dùng chế độ ghi âm dự phòng bên dưới.");
+      setError("Thiết bị này chưa hỗ trợ hoặc đang chặn micro tạm thời.");
+      setStatus("unsupported");
       setIsListening(false);
     };
+
     recognition.onresult = (event) => {
       const text = Array.from(event.results)
         .map((result) => result[0]?.transcript ?? "")
         .join(" ");
       setTranscript(text);
+
       if (normalize(text) === normalize(expectedText)) {
-        onComplete();
+        completedRef.current = true;
+        setStatus("correct");
+        recognition.stop();
       }
     };
 
@@ -99,183 +116,66 @@ export const VoiceRecorderPanel = ({
       recognition.abort();
       recognitionRef.current = null;
     };
-  }, [RecognitionCtor, expectedText, onComplete]);
+  }, [RecognitionCtor, expectedText, onComplete, transcript]);
 
-  useEffect(() => {
-    return () => {
-      mediaRecorderRef.current?.stop();
-      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-      if (recordedUrl) {
-        URL.revokeObjectURL(recordedUrl);
-      }
-    };
-  }, [recordedUrl]);
-
-  const startRecognition = () => {
-    setError(null);
+  const toggleListening = () => {
     const recognition = recognitionRef.current;
     if (!recognition) {
-      setError("Thiết bị này chưa hỗ trợ nhận diện giọng nói. Bé hãy dùng chế độ ghi âm dự phòng.");
+      setStatus("unsupported");
+      setError("Thiết bị này chưa hỗ trợ micro. Hãy thử trên trình duyệt khác hoặc cấp quyền micro.");
       return;
     }
+
+    if (isListening) {
+      recognition.stop();
+      return;
+    }
+
+    setTranscript("");
+    setError(null);
+    setStatus("idle");
 
     try {
       recognition.start();
     } catch {
-      setError("Không thể bắt đầu nhận diện giọng nói. Hãy thử lại.");
+      setError("Không thể bắt đầu ghi âm. Hãy thử lại.");
     }
   };
 
-  const startRecording = async () => {
-    if (!hasMediaRecorder) {
-      setError("Thiết bị này chưa hỗ trợ ghi âm micro.");
-      return;
-    }
-
-    setError(null);
-    setTranscript("");
-    if (recordedUrl) {
-      URL.revokeObjectURL(recordedUrl);
-      setRecordedUrl(null);
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-      chunksRef.current = [];
-
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
-        }
-      };
-
-      recorder.onstart = () => setIsRecording(true);
-      recorder.onstop = () => {
-        setIsRecording(false);
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const nextUrl = URL.createObjectURL(blob);
-        setRecordedUrl(nextUrl);
-        stream.getTracks().forEach((track) => track.stop());
-        mediaStreamRef.current = null;
-      };
-
-      recorder.start();
-    } catch {
-      setError("Không thể mở micro trên thiết bị này. Hãy cấp quyền micro cho ứng dụng rồi thử lại.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") {
-      return;
-    }
-
-    mediaRecorderRef.current.stop();
-  };
-
-  const openNativeCapture = () => {
-    setError(null);
-    fileInputRef.current?.click();
-  };
-
-  const useFallbackRecording = !RecognitionCtor && hasMediaRecorder;
-  const useCaptureFallback = !RecognitionCtor && !hasMediaRecorder && hasFileCapture;
+  const buttonLabel = isListening ? "Dừng ghi âm" : "Bấm để nói";
+  const helperText =
+    status === "correct"
+      ? "Tuyệt vời! Bé đã đọc đúng rồi."
+      : status === "wrong"
+        ? "Bé hãy nói lại chậm hơn một chút nhé."
+        : hint ?? "Bé bấm nút rồi đọc to từ/câu mẫu. App sẽ tự kiểm tra.";
 
   return (
     <div className="space-y-4 rounded-[2rem] bg-white p-5 shadow-xl">
       <div className="text-center">
         <div className="text-sm font-black uppercase tracking-[0.3em] text-slate-500">Speak</div>
         <h3 className="mt-1 text-3xl font-black text-slate-900">{expectedText}</h3>
-        {hint ? <p className="mt-2 text-sm font-semibold text-slate-600">{hint}</p> : null}
+        <p className="mt-2 text-sm font-semibold text-slate-600">{helperText}</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="flex justify-center">
         <motion.button
           whileTap={{ scale: 0.96 }}
           animate={isListening ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-          onClick={startRecognition}
-          className={`kid-button justify-center ${RecognitionCtor ? "border-emerald-600 bg-emerald-300 text-emerald-950" : "border-slate-300 bg-slate-100 text-slate-400"}`}
-          disabled={!RecognitionCtor || isRecording}
+          onClick={toggleListening}
+          className={`flex h-20 w-20 items-center justify-center rounded-full shadow-xl ${
+            isListening ? "bg-pink-500 text-white" : status === "unsupported" ? "bg-slate-200 text-slate-400" : "bg-emerald-500 text-white"
+          }`}
+          aria-label={buttonLabel}
+          disabled={status === "unsupported" && !RecognitionCtor}
         >
-          {isListening ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
-          Nói & kiểm tra
-        </motion.button>
-
-        <motion.button
-          whileTap={{ scale: 0.96 }}
-          animate={isRecording ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-          onClick={hasMediaRecorder ? (isRecording ? stopRecording : startRecording) : openNativeCapture}
-          className={`kid-button justify-center ${useFallbackRecording || useCaptureFallback ? "border-sky-600 bg-sky-300 text-sky-950" : "border-slate-300 bg-slate-100 text-slate-400"}`}
-          disabled={isListening}
-        >
-          {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-          {hasMediaRecorder ? (isRecording ? "Dừng ghi âm" : "Ghi âm dự phòng") : "Mở micro điện thoại"}
+          {isListening ? <Mic className="h-8 w-8" /> : <MicOff className="h-8 w-8" />}
         </motion.button>
       </div>
-
-      {useCaptureFallback ? (
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="audio/*"
-          capture="user"
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (!file) return;
-
-            if (recordedUrl) {
-              URL.revokeObjectURL(recordedUrl);
-              setRecordedUrl(null);
-            }
-
-            const nextUrl = URL.createObjectURL(file);
-            setRecordedUrl(nextUrl);
-            setError(null);
-          }}
-        />
-      ) : null}
 
       <div className="rounded-2xl bg-slate-50 p-4 text-center text-sm font-bold text-slate-700">
-        {transcript || (isRecording ? "Đang ghi âm giọng của bé..." : "Bé hãy bấm micro và nói theo mẫu.")}
+        {transcript || (isListening ? "Bé hãy đọc theo mẫu ngay bây giờ..." : "Bé hãy bấm nút để bắt đầu nói.")}
       </div>
-
-      {recordedUrl ? (
-        <div className="space-y-3 rounded-2xl border border-sky-100 bg-sky-50 p-4">
-          <p className="text-sm font-bold text-sky-700">Bé đã ghi âm xong, hãy nghe lại rồi hoàn thành.</p>
-          <audio controls className="w-full" src={recordedUrl} />
-          <button type="button" onClick={onComplete} className="kid-button w-full border-emerald-600 bg-emerald-300 text-emerald-950">
-            <Play className="h-4 w-4" />
-            Tôi đã nói xong
-          </button>
-        </div>
-      ) : null}
-
-      {!RecognitionCtor && !hasMediaRecorder ? (
-        <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 bg-amber-50 p-4">
-          <p className="text-sm font-bold text-amber-700">Mock voice mode</p>
-          <input
-            value={mockValue}
-            onChange={(e) => setMockValue(e.target.value)}
-            placeholder="Gõ câu bé vừa nói"
-            className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              if (normalize(mockValue) === normalize(expectedText)) onComplete();
-              else setError("Chưa khớp rồi, thử nói lại nhé!");
-            }}
-            className="kid-button w-full border-emerald-600 bg-emerald-300 text-emerald-950"
-          >
-            Tôi đã nói xong
-          </button>
-        </div>
-      ) : null}
 
       {error ? <div className="text-center text-sm font-bold text-rose-600">{error}</div> : null}
       <div className="flex justify-center text-slate-500">

@@ -76,8 +76,8 @@ const buildExplorerWordLesson = (unitId: string, topicTitle: string, chunkIndex:
       prompt: "Kéo thả chữ cái để ghép từ hoàn chỉnh nhé!",
       skill: "writing",
       visual: {
-        title: primary.word,
-        subtitle: primary.example,
+        title: primary.translation,
+        subtitle: "Nhìn hình và nhớ từ tiếng Anh để ghép đúng nhé.",
         emoji: primary.emoji,
       },
       targetWord: primary.word,

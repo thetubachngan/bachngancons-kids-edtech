@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Lock, Star, Play, Check } from "lucide-react";
 
 import type { Curriculum } from "@/data/learningSchema";
-import { getNodeState } from "@/store/learningStore";
+import { getNodeState, type LevelTab, useLearningStore } from "@/store/learningStore";
 
-type LevelTab = "explorer" | "builder" | "challenger";
 
 const levelMap: Record<LevelTab, number> = {
   explorer: 1,
@@ -38,7 +37,7 @@ export const LearningMap = ({
   onFocusConsumed?: () => void;
   onStartLesson: (lessonId: string) => void;
 }) => {
-  const [selectedLevel, setSelectedLevel] = useState<LevelTab>("explorer");
+  const { state, dispatch } = useLearningStore();
   const lastFocusedLessonRef = useRef<string | null>(null);
   const focusedLesson = useMemo(
     () => (focusLessonId ? curriculum.units.flatMap((unit) => unit.lessons).find((lesson) => lesson.id === focusLessonId) ?? null : null),
@@ -47,7 +46,7 @@ export const LearningMap = ({
   const focusedLevelTab = focusedLesson
     ? ((Object.entries(levelMap).find(([, level]) => level === focusedLesson.level)?.[0] ?? "explorer") as LevelTab)
     : null;
-  const activeLevelTab = focusedLevelTab ?? selectedLevel;
+  const activeLevelTab = focusedLevelTab ?? state.activeLevelTab;
   const filteredUnits = useMemo(() => curriculum.units.filter((unit) => unit.level === levelMap[activeLevelTab]), [activeLevelTab, curriculum.units]);
 
   useEffect(() => {
@@ -74,13 +73,13 @@ export const LearningMap = ({
   return (
     <div className="mx-auto w-full max-w-xl select-none px-3 pb-[calc(6rem+var(--safe-bottom))] sm:px-4">
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <button type="button" onClick={() => setSelectedLevel("explorer")} className={`kid-button justify-center border-b-4 ${activeLevelTab === "explorer" ? tabStyles.explorer : "border-slate-200 bg-white text-slate-600"}`}>
+        <button type="button" onClick={() => dispatch({ type: "SET_ACTIVE_LEVEL", level: "explorer" })} className={`kid-button justify-center border-b-4 ${activeLevelTab === "explorer" ? tabStyles.explorer : "border-slate-200 bg-white text-slate-600"}`}>
           🟢 Explorer (5-6 tuổi)
         </button>
-        <button type="button" onClick={() => setSelectedLevel("builder")} className={`kid-button justify-center border-b-4 ${activeLevelTab === "builder" ? tabStyles.builder : "border-slate-200 bg-white text-slate-600"}`}>
+        <button type="button" onClick={() => dispatch({ type: "SET_ACTIVE_LEVEL", level: "builder" })} className={`kid-button justify-center border-b-4 ${activeLevelTab === "builder" ? tabStyles.builder : "border-slate-200 bg-white text-slate-600"}`}>
           🔵 Builder (7-8 tuổi)
         </button>
-        <button type="button" onClick={() => setSelectedLevel("challenger")} className={`kid-button justify-center border-b-4 ${activeLevelTab === "challenger" ? tabStyles.challenger : "border-slate-200 bg-white text-slate-600"}`}>
+        <button type="button" onClick={() => dispatch({ type: "SET_ACTIVE_LEVEL", level: "challenger" })} className={`kid-button justify-center border-b-4 ${activeLevelTab === "challenger" ? tabStyles.challenger : "border-slate-200 bg-white text-slate-600"}`}>
           🟠 Challenger (9+ tuổi)
         </button>
       </div>

@@ -22,23 +22,13 @@ const levenshteinDistance = (left: string, right: string) => {
     return 0;
   }
 
-  if (!a.length) {
-    return b.length;
-  }
-
-  if (!b.length) {
-    return a.length;
-  }
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
 
   const matrix = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
 
-  for (let i = 0; i <= a.length; i += 1) {
-    matrix[i]![0] = i;
-  }
-
-  for (let j = 0; j <= b.length; j += 1) {
-    matrix[0]![j] = j;
-  }
+  for (let i = 0; i <= a.length; i += 1) matrix[i]![0] = i;
+  for (let j = 0; j <= b.length; j += 1) matrix[0]![j] = j;
 
   for (let i = 1; i <= a.length; i += 1) {
     for (let j = 1; j <= b.length; j += 1) {
@@ -59,16 +49,16 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 const getThresholds = (difficulty: SpeechDifficulty, tokenCount: number) => {
   const base =
     difficulty === 1
-      ? { correct: 0.72, almost: 0.56 }
+      ? { correct: 0.72, almost: 0.58 }
       : difficulty === 2
-        ? { correct: 0.8, almost: 0.66 }
-        : { correct: 0.86, almost: 0.74 };
+        ? { correct: 0.82, almost: 0.68 }
+        : { correct: 0.9, almost: 0.76 };
 
   const tokenAdjustment = tokenCount <= 1 ? 0.05 : tokenCount >= 4 ? -0.03 : 0;
 
   return {
-    correct: clamp(base.correct + tokenAdjustment, 0.62, 0.92),
-    almost: clamp(base.almost + tokenAdjustment, 0.42, 0.88),
+    correct: clamp(base.correct + tokenAdjustment, 0.62, 0.94),
+    almost: clamp(base.almost + tokenAdjustment, 0.44, 0.88),
   };
 };
 
@@ -90,12 +80,10 @@ export const evaluateSpeechMatch = (
 
   const expectedTokens = tokenize(expected);
   const actualTokens = tokenize(actual);
-  const maxLength = Math.max(expected.length, actual.length, 1);
-  const charScore = 1 - levenshteinDistance(expected, actual) / maxLength;
+  const charScore = 1 - levenshteinDistance(expected, actual) / Math.max(expected.length, actual.length, 1);
 
   const maxTokens = Math.max(expectedTokens.length, actualTokens.length, 1);
-  let tokenScore = 0;
-  let matches = 0;
+  let matched = 0;
 
   for (let index = 0; index < maxTokens; index += 1) {
     const left = expectedTokens[index] ?? "";
@@ -106,25 +94,24 @@ export const evaluateSpeechMatch = (
     }
 
     if (left === right) {
-      matches += 1;
+      matched += 1;
       continue;
     }
 
     if (left.startsWith(right) || right.startsWith(left)) {
-      matches += 0.75;
+      matched += 0.78;
       continue;
     }
 
-    const minLen = Math.min(left.length, right.length);
-    const maxLenWord = Math.max(left.length, right.length);
-    const wordRatio = maxLenWord ? minLen / maxLenWord : 0;
-    if (wordRatio >= 0.7) {
-      matches += 0.55;
+    const shortest = Math.min(left.length, right.length);
+    const longest = Math.max(left.length, right.length);
+    const ratio = shortest / longest;
+    if (ratio >= 0.72) {
+      matched += 0.55;
     }
   }
 
-  tokenScore = matches / maxTokens;
-
+  const tokenScore = matched / maxTokens;
   const combinedScore = clamp(charScore * 0.65 + tokenScore * 0.35, 0, 1);
   const { correct, almost } = getThresholds(difficulty, expectedTokens.length || 1);
 

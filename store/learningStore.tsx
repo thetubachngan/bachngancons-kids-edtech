@@ -10,10 +10,13 @@ type LessonStat = {
   completed: boolean;
 };
 
+export type LevelTab = "explorer" | "builder" | "challenger";
+
 type LearningState = {
   unlockedLessonIds: string[];
   completedLessonIds: string[];
   currentLessonId: string | null;
+  activeLevelTab: LevelTab;
   streakDays: number;
   rewards: number;
   stars: number;
@@ -25,6 +28,7 @@ type Action =
   | { type: "HYDRATE"; payload: LearningState }
   | { type: "START_LESSON"; lessonId: string }
   | { type: "EXIT_LESSON" }
+  | { type: "SET_ACTIVE_LEVEL"; level: LevelTab }
   | { type: "ANSWER_WRONG"; lessonId: string }
   | { type: "COMPLETE_LESSON"; lessonId: string; starsEarned: number; nextLessonId?: string | null }
   | { type: "UNLOCK_LESSON"; lessonId: string }
@@ -51,6 +55,7 @@ const initialState: LearningState = {
   unlockedLessonIds: initialUnlockedLessons,
   completedLessonIds: [],
   currentLessonId: null,
+  activeLevelTab: "explorer",
   streakDays: 1,
   rewards: 0,
   stars: 0,
@@ -66,6 +71,8 @@ function reducer(state: LearningState, action: Action): LearningState {
       return { ...state, currentLessonId: action.lessonId, unlockedLessonIds: state.unlockedLessonIds.includes(action.lessonId) ? state.unlockedLessonIds : [...state.unlockedLessonIds, action.lessonId] };
     case "EXIT_LESSON":
       return { ...state, currentLessonId: null };
+    case "SET_ACTIVE_LEVEL":
+      return { ...state, activeLevelTab: action.level };
     case "ANSWER_WRONG": {
       const current = state.lessonStats[action.lessonId] ?? { attempts: 0, starsEarned: 0, completed: false };
       return {

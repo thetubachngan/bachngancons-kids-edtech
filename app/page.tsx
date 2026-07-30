@@ -10,7 +10,7 @@ import { Mascot } from "@/components/gamification/Mascot";
 import { RewardOverlay } from "@/components/gamification/RewardOverlay";
 import { StreakBanner } from "@/components/gamification/StreakBanner";
 import { curriculum, getLessonById, getNextLessonId } from "@/data/curriculum";
-import { LearningStoreProvider, totalLessonCount, useLearningStore } from "@/store/learningStore";
+import { LearningStoreProvider, type LevelTab, totalLessonCount, useLearningStore } from "@/store/learningStore";
 import { preloadAudio } from "@/utils/preloadAudio";
 
 function AppShell() {
@@ -23,6 +23,23 @@ function AppShell() {
   const [isPreparingLesson, setIsPreparingLesson] = useState(false);
 
   const activeLesson = useMemo(() => (activeLessonId ? getLessonById(activeLessonId) : null), [activeLessonId]);
+
+  const levelTabForLesson = (lessonId: string): LevelTab => {
+    const lesson = getLessonById(lessonId);
+    if (!lesson) {
+      return "explorer";
+    }
+
+    if (lesson.level === 2) {
+      return "builder";
+    }
+
+    if (lesson.level === 3) {
+      return "challenger";
+    }
+
+    return "explorer";
+  };
 
   const collectLessonAudioSources = (lessonId: string) => {
     const lesson = getLessonById(lessonId);
@@ -64,6 +81,7 @@ function AppShell() {
     }
 
     setIsPreparingLesson(true);
+    dispatch({ type: "SET_ACTIVE_LEVEL", level: levelTabForLesson(lessonId) });
     dispatch({ type: "START_LESSON", lessonId });
     setActiveLessonId(lessonId);
     setLessonProgress(0);
@@ -91,14 +109,15 @@ function AppShell() {
   };
 
   const handleContinueFromReward = () => {
+    const nextLessonId = pendingNextLessonId;
     setRewardOpen(false);
+    setPendingNextLessonId(null);
 
-    if (pendingNextLessonId) {
-      setActiveLessonId(null);
+    if (nextLessonId) {
+      startLesson(nextLessonId);
       return;
     }
 
-    setPendingNextLessonId(null);
     setActiveLessonId(null);
   };
 

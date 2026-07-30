@@ -9,13 +9,15 @@ import { motion } from "framer-motion";
 type RecognitionAlternative = { transcript?: string; confidence?: number };
 type RecognitionResultLike = { 0?: RecognitionAlternative; isFinal?: boolean };
 type RecognitionEventLike = { results: ArrayLike<RecognitionResultLike> };
+type SpeechRecognitionErrorEventLike = { error?: string; message?: string };
+
 type SpeechRecognitionLike = {
   lang: string;
   interimResults: boolean;
   continuous: boolean;
   onstart: (() => void) | null;
   onend: (() => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
   onresult: ((event: RecognitionEventLike) => void) | null;
   start: () => void;
   stop: () => void;
@@ -61,9 +63,21 @@ export const VoiceRecorderPanel = ({
   const [transcript, setTranscript] = useState("");
   const [status, setStatus] = useState<"idle" | "listening" | "correct" | "wrong">("idle");
   const [error, setError] = useState<string | null>(null);
+
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const nativeListenerRef = useRef<PluginListenerHandle | null>(null);
   const completedRef = useRef(false);
+
+  const expectedTextRef = useRef(expectedText);
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    expectedTextRef.current = expectedText;
+    onCompleteRef.current = onComplete;
+    setTranscript("");
+    setStatus("idle");
+    setError(null);
+  }, [expectedText, onComplete]);
 
   const RecognitionCtor = useMemo(() => {
     if (typeof window === "undefined") return null;
@@ -89,12 +103,12 @@ export const VoiceRecorderPanel = ({
         nativeListenerRef.current = await SpeechRecognition.addListener("partialResults", (payload) => {
           const text = extractNativeTranscript(payload);
           setTranscript(text);
-          if (normalize(text) === normalize(expectedText)) {
+          if (normalize(text) === normalize(expectedTextRef.current)) {
             completedRef.current = true;
             setStatus("correct");
             setIsListening(false);
             void SpeechRecognition.stop();
-            onComplete();
+            onCompleteRef.current();
           }
         });
 
@@ -113,63 +127,81 @@ export const VoiceRecorderPanel = ({
         return false;
       }
 
-      const recognition = new RecognitionCtor();
-      recognition.lang = "en-US";
-      recognition.interimResults = true;
-      recognition.continuous = false;
+      try {
+        const recognition = new RecognitionCtor();
+        recognition.lang = "en-US";
+        recognition.interimResults = true;
+        recognition.continuous = true;
 
-      recognition.onstart = () => {
-        completedRef.current = false;
-        setError(null);
-        setStatus("listening");
-        setIsListening(true);
-      };
-      recognition.onend = () => {
-        setIsListening(false);
-        if (completedRef.current) {
-          return;
+        recognition.onstart = () => {
+          completedRef.current = false;
+          setError(null);
+          setStatus("listening");
+          setIsListening(true);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+          if (completedRef.current) {
+            return;
+          }
+
+          setStatus((prevStatus) => {
+            if (prevStatus === "listening") {
+              return "idle";
+            }
+            return prevStatus;
+          });
+        };
+
+        recognition.onerror = (event) => {
+          const errType = event?.error;
+          if (errType === "aborted") return;
+
+          setIsListening(false);
+          if (errType === "no-speech") {
+            setStatus("wrong");
+            setError("Bé chưa kịp nói gì, bấm nút và thử lại nhé.");
+          } else if (errType === "not-allowed" || errType === "service-not-allowed") {
+            setStatus("wrong");
+            setError("Chưa được cấp quyền micro. Vui lòng cấp quyền trong cài đặt trình duyệt.");
+          } else if (errType === "network") {
+            setStatus("wrong");
+            setError("Lỗi kết nối mạng nhận diện giọng nói. Kiểm tra Wifi/4G.");
+          } else {
+            setStatus("wrong");
+            setError("Thiết bị này chưa hỗ trợ hoặc đang chặn micro tạm thời.");
+          }
+        };
+
+        recognition.onresult = (event) => {
+          const resultsArray = Array.from(event.results);
+          const text = resultsArray
+            .map((result) => result[0]?.transcript ?? "")
+            .join(" ")
+            .trim();
+
+          setTranscript(text);
+
+          if (normalize(text) === normalize(expectedTextRef.current)) {
+            completedRef.current = true;
+            setStatus("correct");
+            try {
+              recognition.stop();
+            } catch {}
+            onCompleteRef.current();
+          }
+        };
+
+        recognitionRef.current = recognition;
+        if (!cancelled) {
+          setEngine("browser");
         }
 
-        const normalizedTranscript = normalize(transcript);
-        if (!normalizedTranscript) {
-          setStatus("idle");
-          return;
-        }
-
-        if (normalizedTranscript === normalize(expectedText)) {
-          completedRef.current = true;
-          setStatus("correct");
-          onComplete();
-          return;
-        }
-
-        setStatus("wrong");
-        setError("Con nói chưa đúng lắm, thử lại nhé.");
-      };
-      recognition.onerror = () => {
-        setError("Thiết bị này chưa hỗ trợ hoặc đang chặn micro tạm thời.");
-        setStatus("wrong");
-        setIsListening(false);
-      };
-      recognition.onresult = (event) => {
-        const text = Array.from(event.results)
-          .map((result) => result[0]?.transcript ?? "")
-          .join(" ");
-        setTranscript(text);
-        if (normalize(text) === normalize(expectedText)) {
-          completedRef.current = true;
-          setStatus("correct");
-          recognition.stop();
-          onComplete();
-        }
-      };
-
-      recognitionRef.current = recognition;
-      if (!cancelled) {
-        setEngine("browser");
+        return true;
+      } catch {
+        return false;
       }
-
-      return true;
     };
 
     void (async () => {
@@ -186,15 +218,21 @@ export const VoiceRecorderPanel = ({
 
     return () => {
       cancelled = true;
-      recognitionRef.current?.abort();
-      recognitionRef.current = null;
-      void nativeListenerRef.current?.remove();
-      nativeListenerRef.current = null;
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {}
+        recognitionRef.current = null;
+      }
+      if (nativeListenerRef.current) {
+        void nativeListenerRef.current.remove();
+        nativeListenerRef.current = null;
+      }
       if (nativePlatform) {
         void SpeechRecognition.stop();
       }
     };
-  }, [RecognitionCtor, expectedText, onComplete, transcript]);
+  }, [RecognitionCtor]);
 
   const ensureNativePermission = async () => {
     try {
@@ -214,9 +252,15 @@ export const VoiceRecorderPanel = ({
   const toggleListening = async () => {
     setError(null);
 
+    if (typeof window !== "undefined" && !window.isSecureContext && !nativePlatform && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      setStatus("wrong");
+      setError("Nhận diện giọng nói yêu cầu truy cập qua địa chỉ bảo mật HTTPS trên di động.");
+      return;
+    }
+
     if (engine === "unsupported") {
       setStatus("wrong");
-      setError("Thiết bị này chưa hỗ trợ micro hoặc chưa cấp quyền micro.");
+      setError("Trình duyệt này không hỗ trợ Web Speech API. Vui lòng mở bằng Chrome hoặc Safari.");
       return;
     }
 
@@ -257,22 +301,36 @@ export const VoiceRecorderPanel = ({
     const recognition = recognitionRef.current;
     if (!recognition) {
       setStatus("wrong");
-      setError("Thiết bị này chưa hỗ trợ micro. Hãy thử trên trình duyệt khác hoặc cấp quyền micro.");
+      setError("Thiết bị chưa sẵn sàng micro. Hãy thử lại.");
       return;
     }
 
     if (isListening) {
-      recognition.stop();
+      try {
+        recognition.stop();
+      } catch {}
       return;
     }
 
+    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function") {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
+      } catch {
+        setStatus("wrong");
+        setError("Trình duyệt chưa được cấp quyền dùng Micro.");
+        return;
+      }
+    }
+
     setTranscript("");
-    setStatus("idle");
+    setStatus("listening");
+    completedRef.current = false;
 
     try {
       recognition.start();
     } catch {
-      setError("Không thể bắt đầu ghi âm. Hãy thử lại.");
+      setError("Không thể bắt đầu ghi âm. Hãy thử bấm lại lần nữa.");
     }
   };
 
@@ -299,8 +357,12 @@ export const VoiceRecorderPanel = ({
           onClick={() => {
             void toggleListening();
           }}
-          className={`flex h-20 w-20 items-center justify-center rounded-full shadow-xl ${
-            isListening ? "bg-pink-500 text-white" : engine === "unsupported" ? "bg-slate-200 text-slate-400" : "bg-emerald-500 text-white"
+          className={`flex h-20 w-20 items-center justify-center rounded-full shadow-xl transition-colors ${
+            isListening
+              ? "bg-pink-500 text-white"
+              : engine === "unsupported"
+                ? "bg-slate-200 text-slate-400"
+                : "bg-emerald-500 text-white"
           }`}
           aria-label={buttonLabel}
         >

@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Mic, MicOff, Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { evaluateSpeechMatch, type SpeechDifficulty } from "@/utils/speechMatch";
+
 type RecognitionAlternative = { transcript?: string; confidence?: number };
 type RecognitionResultLike = { 0?: RecognitionAlternative; isFinal?: boolean };
 type RecognitionEventLike = { results: ArrayLike<RecognitionResultLike> };
@@ -23,6 +25,7 @@ type SpeechRecognitionLike = {
   stop: () => void;
   abort: () => void;
 };
+
 type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 
 type RecognitionWindow = Window & {
@@ -32,7 +35,6 @@ type RecognitionWindow = Window & {
 
 type Engine = "native" | "browser" | "unsupported";
 
-const normalize = (text: string) => text.replace(/[^a-z0-9\s]/gi, "").replace(/\s+/g, " ").trim().toLowerCase();
 const nativePlatform = Capacitor.isNativePlatform();
 
 const extractNativeTranscript = (payload: unknown) => {
@@ -49,34 +51,50 @@ const extractNativeTranscript = (payload: unknown) => {
   return maybeMatches.value ?? maybeMatches.transcript ?? "";
 };
 
+const getDifficulty = (level?: number): SpeechDifficulty => {
+  if (!level || level <= 1) return 1;
+  if (level >= 3) return 3;
+  return 2;
+};
+
 export const VoiceRecorderPanel = ({
   expectedText,
   onComplete,
   hint,
+  level,
 }: {
   expectedText: string;
   onComplete: () => void;
   hint?: string;
+  level?: number;
 }) => {
   const [engine, setEngine] = useState<Engine>("unsupported");
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [status, setStatus] = useState<"idle" | "listening" | "correct" | "wrong">("idle");
+  const [status, setStatus] = useState<"idle" | "listening" | "processing" | "correct" | "almost-correct" | "wrong">("idle");
   const [error, setError] = useState<string | null>(null);
 
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const nativeListenerRef = useRef<PluginListenerHandle | null>(null);
   const completedRef = useRef(false);
-
+  const transcriptRef = useRef("");
   const expectedTextRef = useRef(expectedText);
   const onCompleteRef = useRef(onComplete);
+  const difficulty = getDifficulty(level);
 
   useEffect(() => {
     expectedTextRef.current = expectedText;
     onCompleteRef.current = onComplete;
-    setTranscript("");
-    setStatus("idle");
-    setError(null);
+    const timer = window.setTimeout(() => {
+      transcriptRef.current = "";
+      setTranscript("");
+      setStatus("idle");
+      setError(null);
+      setIsListening(false);
+      completedRef.current = false;
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [expectedText, onComplete]);
 
   const RecognitionCtor = useMemo(() => {
@@ -102,14 +120,31 @@ export const VoiceRecorderPanel = ({
 
         nativeListenerRef.current = await SpeechRecognition.addListener("partialResults", (payload) => {
           const text = extractNativeTranscript(payload);
+          transcriptRef.current = text;
           setTranscript(text);
-          if (normalize(text) === normalize(expectedTextRef.current)) {
+
+          if (!text) {
+            setStatus("processing");
+            return;
+          }
+
+          const result = evaluateSpeechMatch(expectedTextRef.current, text, difficulty);
+          if (result.status === "correct") {
             completedRef.current = true;
             setStatus("correct");
             setIsListening(false);
             void SpeechRecognition.stop();
             onCompleteRef.current();
+            return;
           }
+
+          if (result.status === "almost-correct") {
+            setStatus("almost-correct");
+            setError("Con nói gần đúng rồi, thử nói rõ hơn một chút nhé.");
+            return;
+          }
+
+          setStatus("processing");
         });
 
         if (!cancelled) {
@@ -131,7 +166,7 @@ export const VoiceRecorderPanel = ({
         const recognition = new RecognitionCtor();
         recognition.lang = "en-US";
         recognition.interimResults = true;
-        recognition.continuous = true;
+        recognition.continuous = false;
 
         recognition.onstart = () => {
           completedRef.current = false;
@@ -146,12 +181,28 @@ export const VoiceRecorderPanel = ({
             return;
           }
 
-          setStatus((prevStatus) => {
-            if (prevStatus === "listening") {
-              return "idle";
-            }
-            return prevStatus;
-          });
+          const normalizedTranscript = transcriptRef.current;
+          if (!normalizedTranscript) {
+            setStatus("idle");
+            return;
+          }
+
+          const result = evaluateSpeechMatch(expectedTextRef.current, normalizedTranscript, difficulty);
+          if (result.status === "correct") {
+            completedRef.current = true;
+            setStatus("correct");
+            onCompleteRef.current();
+            return;
+          }
+
+          if (result.status === "almost-correct") {
+            setStatus("almost-correct");
+            setError("Con nói gần đúng rồi, thử nói rõ hơn một chút nhé.");
+            return;
+          }
+
+          setStatus("wrong");
+          setError("Con nói chưa đúng lắm, thử lại nhé.");
         };
 
         recognition.onerror = (event) => {
@@ -181,16 +232,36 @@ export const VoiceRecorderPanel = ({
             .join(" ")
             .trim();
 
+          transcriptRef.current = text;
           setTranscript(text);
 
-          if (normalize(text) === normalize(expectedTextRef.current)) {
+          const finalResult = resultsArray.some((result) => result.isFinal);
+          if (!finalResult) {
+            setStatus("processing");
+            return;
+          }
+
+          const result = evaluateSpeechMatch(expectedTextRef.current, text, difficulty);
+          if (result.status === "correct") {
             completedRef.current = true;
             setStatus("correct");
             try {
               recognition.stop();
-            } catch {}
+            } catch {
+              // noop
+            }
             onCompleteRef.current();
+            return;
           }
+
+          if (result.status === "almost-correct") {
+            setStatus("almost-correct");
+            setError("Con nói gần đúng rồi, thử nói rõ hơn một chút nhé.");
+            return;
+          }
+
+          setStatus("wrong");
+          setError("Con nói chưa đúng lắm, thử lại nhé.");
         };
 
         recognitionRef.current = recognition;
@@ -221,7 +292,9 @@ export const VoiceRecorderPanel = ({
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
-        } catch {}
+        } catch {
+          // noop
+        }
         recognitionRef.current = null;
       }
       if (nativeListenerRef.current) {
@@ -232,7 +305,7 @@ export const VoiceRecorderPanel = ({
         void SpeechRecognition.stop();
       }
     };
-  }, [RecognitionCtor]);
+  }, [RecognitionCtor, difficulty]);
 
   const ensureNativePermission = async () => {
     try {
@@ -260,7 +333,7 @@ export const VoiceRecorderPanel = ({
 
     if (engine === "unsupported") {
       setStatus("wrong");
-      setError("Trình duyệt này không hỗ trợ Web Speech API. Vui lòng mở bằng Chrome hoặc Safari.");
+      setError("Thiết bị chưa sẵn sàng micro. Hãy thử trên Chrome hoặc cấp quyền micro.");
       return;
     }
 
@@ -279,6 +352,7 @@ export const VoiceRecorderPanel = ({
       }
 
       completedRef.current = false;
+      transcriptRef.current = "";
       setTranscript("");
       setStatus("listening");
       setIsListening(true);
@@ -308,7 +382,9 @@ export const VoiceRecorderPanel = ({
     if (isListening) {
       try {
         recognition.stop();
-      } catch {}
+      } catch {
+        // noop
+      }
       return;
     }
 
@@ -323,6 +399,7 @@ export const VoiceRecorderPanel = ({
       }
     }
 
+    transcriptRef.current = "";
     setTranscript("");
     setStatus("listening");
     completedRef.current = false;
@@ -338,9 +415,11 @@ export const VoiceRecorderPanel = ({
   const helperText =
     status === "correct"
       ? "Tuyệt vời! Bé đã đọc đúng rồi."
-      : status === "wrong"
-        ? "Bé hãy nói lại chậm hơn một chút nhé."
-        : hint ?? "Bé bấm nút rồi đọc to từ/câu mẫu. App sẽ tự kiểm tra.";
+      : status === "almost-correct"
+        ? "Con nói gần đúng rồi, thử nói rõ hơn một chút nhé."
+        : status === "wrong"
+          ? "Bé hãy nói lại chậm hơn một chút nhé."
+          : hint ?? "Bé bấm nút rồi đọc to từ/câu mẫu. App sẽ tự kiểm tra.";
 
   return (
     <div className="space-y-4 rounded-[2rem] bg-white p-5 shadow-xl">
@@ -358,11 +437,7 @@ export const VoiceRecorderPanel = ({
             void toggleListening();
           }}
           className={`flex h-20 w-20 items-center justify-center rounded-full shadow-xl transition-colors ${
-            isListening
-              ? "bg-pink-500 text-white"
-              : engine === "unsupported"
-                ? "bg-slate-200 text-slate-400"
-                : "bg-emerald-500 text-white"
+            isListening ? "bg-pink-500 text-white" : engine === "unsupported" ? "bg-slate-200 text-slate-400" : "bg-emerald-500 text-white"
           }`}
           aria-label={buttonLabel}
         >

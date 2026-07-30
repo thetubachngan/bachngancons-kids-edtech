@@ -217,6 +217,7 @@ export const CoreQuizEngine = ({
       <VoiceRecorderPanel
         expectedText={currentStep.expectedText}
         hint={currentStep.helperText}
+        level={lesson.level}
         onComplete={handleCorrect}
       />
     );

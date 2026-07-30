@@ -4,11 +4,6 @@ const config: CapacitorConfig = {
   appId: "com.bachngancons.kidsenglish",
   appName: "Penguin English",
   webDir: "out",
-  server: {
-    url: "https://tienganh.bachngancons.com",
-    cleartext: true,
-    androidScheme: "https",
-  },
 };
 
 export default config;

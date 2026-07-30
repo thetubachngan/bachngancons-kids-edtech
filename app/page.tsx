@@ -19,6 +19,7 @@ function AppShell() {
   const [lessonProgress, setLessonProgress] = useState(0);
   const [rewardOpen, setRewardOpen] = useState(false);
   const [rewardStars, setRewardStars] = useState(0);
+  const [pendingNextLessonId, setPendingNextLessonId] = useState<string | null>(null);
   const [isPreparingLesson, setIsPreparingLesson] = useState(false);
 
   const activeLesson = useMemo(() => (activeLessonId ? getLessonById(activeLessonId) : null), [activeLessonId]);
@@ -79,14 +80,27 @@ function AppShell() {
 
   const completeLesson = (lessonId: string, starsEarned: number) => {
     const nextLessonId = getNextLessonId(lessonId);
+    setPendingNextLessonId(nextLessonId);
     if (nextLessonId) {
       void preloadAudio(collectLessonAudioSources(nextLessonId));
     }
     dispatch({ type: "COMPLETE_LESSON", lessonId, starsEarned, nextLessonId });
     setRewardStars(starsEarned);
     setRewardOpen(true);
-    setActiveLessonId(null);
     setLessonProgress(0);
+  };
+
+  const handleContinueFromReward = () => {
+    const nextLessonId = pendingNextLessonId;
+    setRewardOpen(false);
+    setPendingNextLessonId(null);
+
+    if (nextLessonId) {
+      startLesson(nextLessonId);
+      return;
+    }
+
+    setActiveLessonId(null);
   };
 
   return (
@@ -153,7 +167,7 @@ function AppShell() {
         </FocusLessonShell>
       )}
 
-      <RewardOverlay open={rewardOpen} stars={rewardStars} streak={state.streakDays} onClose={() => setRewardOpen(false)} />
+      <RewardOverlay open={rewardOpen} stars={rewardStars} streak={state.streakDays} onClose={handleContinueFromReward} onContinue={handleContinueFromReward} />
     </div>
   );
 }

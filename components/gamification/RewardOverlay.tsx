@@ -12,11 +12,13 @@ export const RewardOverlay = ({
   stars,
   streak,
   onClose,
+  onContinue,
 }: {
   open: boolean;
   stars: number;
   streak: number;
   onClose: () => void;
+  onContinue?: () => void;
 }) => {
   useEffect(() => {
     if (!open) {
@@ -53,7 +55,7 @@ export const RewardOverlay = ({
             <h3 className="text-3xl font-black text-slate-900">Bé hoàn thành rồi!</h3>
             <p className="mt-2 text-base font-semibold text-slate-600">Nhận được {stars} sao vàng mới ✨</p>
             <p className="mt-1 text-sm font-bold text-orange-600">Chuỗi học hiện tại: {streak} ngày 🔥</p>
-            <button type="button" onClick={onClose} className="kid-button mt-6 border-emerald-600 bg-emerald-400 text-emerald-950">
+            <button type="button" onClick={onContinue ?? onClose} className="kid-button mt-6 border-emerald-600 bg-emerald-400 text-emerald-950">
               Tiếp tục nào
             </button>
           </motion.div>

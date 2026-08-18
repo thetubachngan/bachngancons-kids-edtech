@@ -8,10 +8,18 @@ import { motion } from "framer-motion";
 
 import { useSpeech } from "@/hooks/useSpeech";
 import type { SpeechDifficulty } from "@/utils/speechMatch";
-import { evaluateSpeechMatch, normalizeSpeechText } from "@/utils/speechMatch";
+import { evaluateMultiCandidateMatch, evaluateSpeechMatch, normalizeSpeechText } from "@/utils/speechMatch";
 
 type RecognitionAlternative = { transcript?: string; confidence?: number };
-type RecognitionResultLike = { 0?: RecognitionAlternative; isFinal?: boolean };
+type RecognitionResultLike = {
+  0?: RecognitionAlternative;
+  1?: RecognitionAlternative;
+  2?: RecognitionAlternative;
+  3?: RecognitionAlternative;
+  4?: RecognitionAlternative;
+  length?: number;
+  isFinal?: boolean;
+};
 type RecognitionEventLike = { results: ArrayLike<RecognitionResultLike> };
 type SpeechRecognitionErrorEventLike = { error?: string; message?: string };
 
@@ -19,6 +27,7 @@ type SpeechRecognitionLike = {
   lang: string;
   interimResults: boolean;
   continuous: boolean;
+  maxAlternatives?: number;
   onstart: (() => void) | null;
   onend: (() => void) | null;
   onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
@@ -91,7 +100,7 @@ const wordSimilarity = (expected: string, actual: string) => {
 const matchedWordIndexes = (expectedText: string, transcript: string, difficulty: SpeechDifficulty) => {
   const expectedWords = cleanTranscript(expectedText);
   const spokenWords = cleanTranscript(transcript);
-  const threshold = difficulty === 1 ? 0.68 : difficulty === 2 ? 0.78 : 0.85;
+  const threshold = difficulty === 1 ? 0.58 : difficulty === 2 ? 0.68 : 0.78;
   const matched: number[] = [];
 
   let spokenIndex = 0;
@@ -120,18 +129,19 @@ const matchedWordIndexes = (expectedText: string, transcript: string, difficulty
   return matched;
 };
 
-const extractNativeTranscript = (payload: unknown) => {
+const extractNativeCandidates = (payload: unknown): string[] => {
   if (!payload || typeof payload !== "object") {
-    return "";
+    return [];
   }
 
   const maybeMatches = payload as { matches?: string[]; value?: string; transcript?: string };
 
-  if (Array.isArray(maybeMatches.matches)) {
-    return maybeMatches.matches.join(" ").trim();
+  if (Array.isArray(maybeMatches.matches) && maybeMatches.matches.length > 0) {
+    return maybeMatches.matches.filter((item): item is string => Boolean(item && typeof item === "string"));
   }
 
-  return maybeMatches.value ?? maybeMatches.transcript ?? "";
+  const single = maybeMatches.value ?? maybeMatches.transcript;
+  return single ? [single] : [];
 };
 
 export const VoiceRecorderPanel = ({
@@ -291,17 +301,18 @@ export const VoiceRecorderPanel = ({
         }
 
         nativeListenerRef.current = await SpeechRecognition.addListener("partialResults", (payload) => {
-          const text = extractNativeTranscript(payload);
-          transcriptRef.current = text;
-          setTranscript(text);
-
-          if (!text) {
+          const candidates = extractNativeCandidates(payload);
+          if (!candidates.length) {
             setStatus("processing");
             return;
           }
 
+          const primaryText = candidates[0] ?? "";
+          transcriptRef.current = primaryText;
+          setTranscript(primaryText);
+
           clearHintTimer();
-          const result = evaluateSpeechMatch(expectedTextRef.current, text, difficulty);
+          const result = evaluateMultiCandidateMatch(expectedTextRef.current, candidates, difficulty);
           if (result.status === "correct") {
             completedRef.current = true;
             setStatus("correct");
@@ -342,6 +353,9 @@ export const VoiceRecorderPanel = ({
         recognition.lang = "en-US";
         recognition.interimResults = true;
         recognition.continuous = false;
+        if ("maxAlternatives" in recognition) {
+          (recognition as unknown as { maxAlternatives: number }).maxAlternatives = 5;
+        }
 
         recognition.onstart = () => {
           completedRef.current = false;
@@ -365,7 +379,8 @@ export const VoiceRecorderPanel = ({
             return;
           }
 
-          const result = evaluateSpeechMatch(expectedTextRef.current, normalizedTranscript, difficulty);
+          const candidates = [normalizedTranscript];
+          const result = evaluateMultiCandidateMatch(expectedTextRef.current, candidates, difficulty);
           if (result.status === "correct") {
             completedRef.current = true;
             setStatus("correct");
@@ -407,22 +422,35 @@ export const VoiceRecorderPanel = ({
 
         recognition.onresult = (event) => {
           const resultsArray = Array.from(event.results);
-          const text = resultsArray
+          const candidates: string[] = [];
+
+          for (const result of resultsArray) {
+            const length = result.length || 1;
+            for (let i = 0; i < length; i += 1) {
+              const altKey = i as 0 | 1 | 2 | 3 | 4;
+              const alt = result[altKey]?.transcript;
+              if (alt && typeof alt === "string") {
+                candidates.push(alt.trim());
+              }
+            }
+          }
+
+          const topText = resultsArray
             .map((result) => result[0]?.transcript ?? "")
             .join(" ")
             .trim();
 
-          transcriptRef.current = text;
-          setTranscript(text);
-
-          const finalResult = resultsArray.some((result) => result.isFinal);
-          if (!finalResult) {
-            setStatus("processing");
-            return;
+          if (topText && !candidates.includes(topText)) {
+            candidates.unshift(topText);
           }
 
-          clearHintTimer();
-          const result = evaluateSpeechMatch(expectedTextRef.current, text, difficulty);
+          const primaryText = candidates[0] ?? topText;
+          transcriptRef.current = primaryText;
+          setTranscript(primaryText);
+
+          const finalResult = resultsArray.some((result) => result.isFinal);
+          const result = evaluateMultiCandidateMatch(expectedTextRef.current, candidates, difficulty);
+
           if (result.status === "correct") {
             completedRef.current = true;
             setStatus("correct");
@@ -435,6 +463,12 @@ export const VoiceRecorderPanel = ({
             return;
           }
 
+          if (!finalResult) {
+            setStatus("processing");
+            return;
+          }
+
+          clearHintTimer();
           if (result.status === "almost-correct") {
             setStatus("almost-correct");
             setError("Con nói gần đúng rồi, thử nói rõ hơn một chút nhé.");
@@ -552,7 +586,8 @@ export const VoiceRecorderPanel = ({
         clearHintTimer();
         stopVisualizer();
         await SpeechRecognition.stop();
-        const result = evaluateSpeechMatch(expectedTextRef.current, transcriptRef.current, difficulty);
+        const candidates = transcriptRef.current ? [transcriptRef.current] : [];
+        const result = evaluateMultiCandidateMatch(expectedTextRef.current, candidates, difficulty);
         if (result.status === "correct") {
           setStatus("correct");
           onCompleteRef.current();
@@ -591,7 +626,7 @@ export const VoiceRecorderPanel = ({
       try {
         await SpeechRecognition.start({
           language: "en-US",
-          maxResults: 1,
+          maxResults: 5,
           partialResults: true,
           popup: false,
         });

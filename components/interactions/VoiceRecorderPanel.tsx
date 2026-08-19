@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { useSpeech } from "@/hooks/useSpeech";
 import type { SpeechDifficulty, WordDetail, SpeechMatchResult } from "@/utils/speechMatch";
-import { evaluateMultiCandidateMatch, evaluateWordDetails, normalizeSpeechText } from "@/utils/speechMatch";
+import { evaluateMultiCandidateMatch, evaluateWordDetails, normalizeSpeechText, getIPAForText } from "@/utils/speechMatch";
 
 type RecognitionAlternative = { transcript?: string; confidence?: number };
 type RecognitionResultLike = {
@@ -721,66 +721,25 @@ export const VoiceRecorderPanel = ({
 
   return (
     <div className="w-full max-w-lg mx-auto space-y-2.5 sm:space-y-3.5 rounded-[1.75rem] sm:rounded-[2.5rem] bg-gradient-to-b from-white via-sky-50/40 to-sky-100/30 p-3.5 sm:p-5 shadow-xl border-2 sm:border-4 border-white/90 backdrop-blur-md max-h-[calc(100dvh-110px)] overflow-y-auto custom-scrollbar">
-      {/* Header text & Expected sentence with Inline IPA Phonetics Directly Underneath */}
-      <div className="text-center space-y-1.5">
+      {/* Header text & Expected sentence with Single Clean IPA Phonetic String Directly Underneath */}
+      <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-1 rounded-full bg-amber-100/90 px-2.5 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-700 shadow-2xs">
           <Sparkles className="h-3 w-3" /> Speak & Learn
         </div>
 
-        {/* Cohesive Sentence Display with Phonetics Under Words (No Separate Heavy Boxes) */}
-        <div className="flex flex-wrap justify-center items-end gap-x-3 gap-y-1.5 py-1">
-          {wordDetails.map((detail, idx) => {
-            const isPerfect = detail.status === "perfect";
-            const isClose = detail.status === "close";
-            const isEvaluated = status === "evaluated";
-            const phonemes = detail.phonemes ?? [];
+        {/* Cohesive Natural Sentence Display */}
+        <h3 className="text-xl sm:text-3xl font-black tracking-wide text-slate-900 drop-shadow-2xs leading-tight">
+          {expectedText}
+        </h3>
 
-            const wordColor = isEvaluated
-              ? isPerfect
-                ? "text-emerald-600 font-black"
-                : isClose
-                  ? "text-amber-600 font-black"
-                  : "text-rose-600 font-black"
-              : "text-slate-900 font-black";
-
-            return (
-              <div key={`${detail.word}-${idx}`} className="flex flex-col items-center">
-                {/* Word Label */}
-                <span className={`text-lg sm:text-2xl tracking-wide transition-colors ${wordColor}`}>
-                  {detail.word}
-                </span>
-
-                {/* Inline IPA Phonemes Directly Underneath Word (Always Visible) */}
-                {phonemes.length > 0 && (
-                  <div className="flex items-center gap-1 mt-1">
-                    {phonemes.map((ph, pIdx) => {
-                      const isPhPerfect = ph.accuracyScore >= 80 || ph.status === "perfect";
-                      const isPhClose = ph.accuracyScore >= 60 || ph.status === "close";
-
-                      const phClass = isEvaluated
-                        ? isPhPerfect
-                          ? "bg-emerald-100 text-emerald-800 border-emerald-400 font-extrabold shadow-2xs"
-                          : isPhClose
-                            ? "bg-amber-100 text-amber-900 border-amber-400 font-extrabold"
-                            : "bg-rose-100 text-rose-800 border-rose-400 font-extrabold animate-pulse"
-                        : "bg-amber-100/90 text-amber-900 border-amber-300 font-black shadow-2xs";
-
-                      return (
-                        <span
-                          key={pIdx}
-                          className={`px-1.5 py-0.5 rounded-md text-[11px] sm:text-xs font-mono border transition-all ${phClass}`}
-                          title={`Âm tiết IPA /${ph.phoneme}/: ${ph.accuracyScore}% độ chính xác`}
-                        >
-                          /{ph.phoneme}/
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {/* Dictionary IPA Phonetic Transcription Directly Underneath Sentence */}
+        {getIPAForText(expectedText) ? (
+          <div className="flex justify-center pt-0.5">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100/90 text-amber-900 border border-amber-300 font-mono font-black text-xs sm:text-sm shadow-2xs">
+              /{getIPAForText(expectedText)}/
+            </span>
+          </div>
+        ) : null}
 
         <p className="text-xs sm:text-sm font-bold text-slate-600 leading-snug">
           {evaluationResult?.feedbackText || hint || "Bé hãy nhấn micro, nghe âm mẫu rồi đọc to nhé! 🐝"}

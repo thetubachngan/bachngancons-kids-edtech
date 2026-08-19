@@ -261,6 +261,66 @@ const WORD_PHONEME_MAP: Record<string, string[]> = {
   tired: ["t", "aɪ", "əd"],
   hungry: ["h", "ʌ", "ŋ", "ɡ", "r", "i"],
   thirsty: ["θ", "ɜː", "s", "t", "i"],
+  my: ["m", "aɪ"],
+  grandmother: ["ɡ", "r", "æ", "n", "m", "ʌ", "ð", "ər"],
+  tells: ["t", "e", "l", "z"],
+  stories: ["s", "t", "ɔː", "r", "i", "z"],
+};
+
+const IPA_DICTIONARY: Record<string, string> = {
+  my: "maɪ",
+  grandmother: "ˈɡræn.mʌð.ər",
+  tells: "telz",
+  stories: "ˈstɔː.riz",
+  this: "ðɪs",
+  is: "ɪz",
+  a: "ə",
+  the: "ðə",
+  i: "aɪ",
+  am: "æm",
+  you: "juː",
+  are: "ɑːr",
+  he: "hiː",
+  she: "ʃiː",
+  it: "ɪt",
+  we: "wiː",
+  they: "ðeɪ",
+  have: "hæv",
+  has: "hæz",
+  can: "kæn",
+  do: "duː",
+  see: "siː",
+  like: "laɪk",
+  love: "lʌv",
+  big: "bɪɡ",
+  small: "smɔːl",
+  family: "ˈfæm.əl.i",
+  mother: "ˈmʌð.ər",
+  father: "ˈfɑː.ðər",
+  brother: "ˈbrʌð.ər",
+  sister: "ˈsɪs.tər",
+  grandfather: "ˈɡræn.fɑː.ðər",
+  hello: "həˈləʊ",
+  goodbye: "ɡʊdˈbaɪ",
+};
+
+export const getIPAForWord = (word: string): string => {
+  const normalized = word.toLowerCase().trim().replace(/[^a-z]/g, "");
+  if (!normalized) return "";
+  if (IPA_DICTIONARY[normalized]) {
+    return IPA_DICTIONARY[normalized];
+  }
+  if (WORD_PHONEME_MAP[normalized]) {
+    return WORD_PHONEME_MAP[normalized].join("");
+  }
+  return normalized;
+};
+
+export const getIPAForText = (text: string): string => {
+  if (!text) return "";
+  const words = text.trim().split(/\s+/);
+  const ipaWords = words.map((w) => getIPAForWord(w)).filter(Boolean);
+  return ipaWords.join(" ");
 };
 
 export const getPhonemesForWord = (word: string): string[] => {

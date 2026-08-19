@@ -10,6 +10,7 @@ type PlaybackHandle = {
 
 type PlayOptions = {
   volume?: number;
+  playbackRate?: number;
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (error: unknown) => void;
@@ -144,6 +145,9 @@ export const playBufferedAudio = (src: string, options: PlayOptions = {}): Playb
       }
 
       sourceNode = context.createBufferSource();
+      if (options.playbackRate && options.playbackRate > 0) {
+        sourceNode.playbackRate.value = options.playbackRate;
+      }
       gainNode = context.createGain();
       gainNode.gain.value = options.volume ?? 1;
       sourceNode.buffer = buffer;

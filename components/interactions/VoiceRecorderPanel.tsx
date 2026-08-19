@@ -569,14 +569,14 @@ export const VoiceRecorderPanel = ({
     }
   };
 
-  const replaySample = () => {
+  const replaySample = (playbackRate: number = 1.0) => {
     stopChildAudioPlayback();
     const spokenText = sampleText ?? expectedText;
     speak({
       text: spokenText,
       audioSrc: sampleAudioSrc,
       kind: spokenText.includes(" ") ? "phrase" : "word",
-      rate: spokenText.includes(" ") ? 0.48 : 0.4,
+      rate: playbackRate,
       source: "lesson",
       mode: "manual",
       interrupt: "all",
@@ -911,37 +911,45 @@ export const VoiceRecorderPanel = ({
 
             <p className="text-xs sm:text-sm font-black text-amber-900 leading-tight">{evaluationResult.feedbackText}</p>
 
-            {/* Commercial Feature: Dual Sound Buttons */}
-            <div className="grid grid-cols-2 gap-2 pt-0.5">
+            {/* Commercial Feature: Dual-Speed Sound Controls (Normal, Slow 0.75x, Child Recording) */}
+            <div className="grid grid-cols-3 gap-1.5 pt-0.5">
               <button
                 type="button"
-                onClick={replaySample}
-                className="flex items-center justify-center gap-1.5 rounded-xl border-b-3 border-sky-600 bg-sky-400 px-2.5 py-2 text-xs font-black text-sky-950 shadow-xs active:translate-y-[2px] active:border-b-1"
+                onClick={() => replaySample(1.0)}
+                className="flex items-center justify-center gap-1 rounded-xl border-b-3 border-sky-600 bg-sky-400 px-2 py-2 text-xs font-black text-sky-950 shadow-xs active:translate-y-[2px] active:border-b-1"
               >
-                <Volume2 className="h-4 w-4 shrink-0" />
+                <Volume2 className="h-3.5 w-3.5 shrink-0" />
                 🔊 Nghe mẫu
+              </button>
+
+              <button
+                type="button"
+                onClick={() => replaySample(0.75)}
+                className="flex items-center justify-center gap-1 rounded-xl border-b-3 border-amber-600 bg-amber-400 px-2 py-2 text-xs font-black text-amber-950 shadow-xs active:translate-y-[2px] active:border-b-1"
+              >
+                🐢 Nghe chậm
               </button>
 
               {recordedAudioUrl ? (
                 <button
                   type="button"
                   onClick={playChildRecordedAudio}
-                  className={`flex items-center justify-center gap-1.5 rounded-xl border-b-3 px-2.5 py-2 text-xs font-black shadow-xs active:translate-y-[2px] active:border-b-1 transition-all ${
+                  className={`flex items-center justify-center gap-1 rounded-xl border-b-3 px-2 py-2 text-xs font-black shadow-xs active:translate-y-[2px] active:border-b-1 transition-all ${
                     isPlayingChildAudio
                       ? "bg-rose-500 text-white border-rose-700"
                       : "bg-emerald-400 text-emerald-950 border-emerald-600"
                   }`}
                 >
-                  {isPlayingChildAudio ? <Square className="h-4 w-4 fill-current shrink-0" /> : <Play className="h-4 w-4 fill-current shrink-0" />}
-                  {isPlayingChildAudio ? "Đang phát..." : "🎧 Nghe lại giọng"}
+                  {isPlayingChildAudio ? <Square className="h-3.5 w-3.5 fill-current shrink-0" /> : <Play className="h-3.5 w-3.5 fill-current shrink-0" />}
+                  {isPlayingChildAudio ? "Đang phát..." : "🎧 Nghe lại"}
                 </button>
               ) : (
                 <button
                   type="button"
                   disabled
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-200 px-2.5 py-2 text-xs font-bold text-slate-400 border-b-3 border-slate-300"
+                  className="flex items-center justify-center gap-1 rounded-xl bg-slate-200 px-2 py-2 text-xs font-bold text-slate-400 border-b-3 border-slate-300"
                 >
-                  🎧 Nghe lại giọng
+                  🎧 Nghe lại
                 </button>
               )}
             </div>
@@ -988,7 +996,7 @@ export const VoiceRecorderPanel = ({
       {showHintCard && status !== "evaluated" && (
         <div className="space-y-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-center shadow-2xs">
           <p className="text-xs font-black text-amber-800">Bé đọc to hơn một chút nhé! 🐝</p>
-          <button type="button" onClick={replaySample} className="kid-button w-full border-sky-600 bg-sky-300 text-sky-950 py-1.5 text-xs">
+          <button type="button" onClick={() => replaySample(1.0)} className="kid-button w-full border-sky-600 bg-sky-300 text-sky-950 py-1.5 text-xs">
             <Volume2 className="h-3.5 w-3.5" />
             Nghe lại âm mẫu chuẩn
           </button>

@@ -80,6 +80,7 @@ export const useSpeech = () => {
     setLastFallbackReason(null);
 
     const playback = playBufferedAudio(options.audioSrc, {
+      playbackRate: options.rate,
       onStart: () => {
         if (requestIdRef.current !== requestId) {
           return;

@@ -111,13 +111,13 @@ Bảo tồn 100% kịch bản hội thoại gắn ID dạng `scenario-[topic]-[i
 ### V. QUY TẮC ÂM THANH TĨNH MP3 & GAMIFICATION CHUẨN AGENTS.MD [UID: IMP-SEC-V]
 
 1. **100% Static MP3 Audio Engine** [UID: IMP-SEC-V-1]: Sử dụng hoàn toàn tệp âm thanh MP3 thu sẵn trong `data/audioManifest.ts` (`/audio/generated/...`). Tuyệt đối KHÔNG dùng Web Speech API cho từ vựng/ví dụ.
-2. **Zero Initial Consonant Truncation & Zero Latency** [UID: IMP-SEC-V-2]: Không dùng lại duy nhất một instance HTMLAudioElement bị dính `currentTime = 0`. Tự động nạp và pre-decode tệp âm thanh của Bài học vào RAM ngay khi vào màn hình.
+2. **Zero Initial Consonant Truncation, Zero Latency & Dual-Speed Audio (0.75x Mode)** [UID: IMP-SEC-V-2]: Không dùng lại duy nhất một instance HTMLAudioElement bị dính `currentTime = 0`. Tự động nạp và pre-decode tệp âm thanh vào RAM ngay khi vào màn hình. Bổ sung chế độ **Phát mẫu tốc độ chậm (0.75x)** qua tham số `playbackRate` của Web Audio API (`AudioBufferSourceNode.playbackRate.value = 0.75`) giúp trẻ 5-8 tuổi nghe rõ nét từng phụ âm đầu và âm tiết cuối trước khi đọc lại.
 3. **Thu âm & Nhận diện Giọng nói AI Chuẩn Âm tiết (`VoiceRecorderPanel.tsx`)** [UID: IMP-SEC-V-3]:
    * **Mô hình Hybrid Architecture**: Kết hợp thu âm VAD ngắt lời 1.5s + Levenshtein local (0đ chi phí API) cho bài học thường và Cloud Phoneme Recognition AI (Azure Pronunciation Assessment Standard) qua API Route `/api/speech/assess` cho bài Voice Challenge.
+   * **Phương pháp phát chậm rõ âm (Dual-Speed Audio Controls)**: Tích hợp 3 nút điều khiển phát âm thanh: **🔊 Nghe mẫu (1.0x)**, **🐢 Nghe chậm (0.75x)** và **🎧 Nghe lại giọng bé**.
    * **Phân tích 4 chỉ số giọng nói**: *Accuracy Score* (Độ chính xác âm tiết), *Fluency Score* (Độ trôi chảy), *Completeness Score* (Đọc đủ từ), *Prosody/Pitch* (Trọng âm & Ngữ điệu).
    * **Định dạng dữ liệu `CommercialSpeechResult` (`utils/speechMatch.ts`)**: Trả về điểm từng âm tiết IPA (0-100) và nhận diện loại lỗi (`Omission`, `Insertion`, `Mispronunciation`).
    * **Giao diện tô màu trực quan âm tiết IPA**: Tô màu trực tiếp từng âm tiết trên giao diện VoiceRecorderPanel: 🟢 **Xanh lá (>=80%)** chuẩn bản xứ, 🟡 **Vàng (60-79%)** tạm ổn, 🔴 **Đỏ (<60%)** sai hoặc nuốt phụ âm đầu/cuối.
-   * **Cơ chế phát lại kép**: Cho phép nghe lại giọng bé 🎧 vs nghe âm mẫu studio chuẩn 🔊.
 4. **Mascot Ong Bee 🐝 Interaction & Gamification** [UID: IMP-SEC-V-4]: Biểu cảm linh hoạt (`happy`, `encouraging`, `celebrating`, `oops`). Popup pháo hoa Confetti và Streak đếm ngày học.
 
 ---

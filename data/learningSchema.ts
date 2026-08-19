@@ -1,6 +1,13 @@
 export type Skill = "listening" | "speaking" | "reading" | "writing";
 export type NodeState = "locked" | "current" | "completed";
-export type QuizType = "mcq" | "drag-drop" | "voice" | "tap-match";
+export type QuizType =
+  | "mcq"
+  | "drag-drop"
+  | "voice"
+  | "tap-match"
+  | "pair-match"
+  | "sentence-builder"
+  | "flashcard-preview";
 
 export type LessonChoice = {
   id: string;
@@ -17,6 +24,24 @@ export type LessonVisual = {
   emoji?: string;
   imageSrc?: string;
   audioSrc?: string;
+};
+
+export type PairItem = {
+  id: string;
+  english: string;
+  vietnamese: string;
+  emoji?: string;
+  audioSrc?: string;
+};
+
+export type FlashcardItem = {
+  id: string;
+  word: string;
+  translation: string;
+  phonetic?: string;
+  emoji?: string;
+  audioSrc?: string;
+  example?: string;
 };
 
 export type LessonStep =
@@ -63,6 +88,33 @@ export type LessonStep =
       expectedAudioText?: string;
       expectedAudioSrc?: string;
       helperText?: string;
+    }
+  | {
+      id: string;
+      type: "pair-match";
+      prompt: string;
+      skill: Skill;
+      visual: LessonVisual;
+      pairs: PairItem[];
+    }
+  | {
+      id: string;
+      type: "sentence-builder";
+      prompt: string;
+      skill: Skill;
+      visual: LessonVisual;
+      sentence: string;
+      translation: string;
+      scrambledWords: string[];
+      questionAudioSrc?: string;
+    }
+  | {
+      id: string;
+      type: "flashcard-preview";
+      prompt: string;
+      skill: Skill;
+      visual: LessonVisual;
+      items: FlashcardItem[];
     };
 
 export type Lesson = {

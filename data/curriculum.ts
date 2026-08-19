@@ -101,10 +101,59 @@ const buildExplorerWordLesson = (unitId: string, topicTitle: string, chunkIndex:
   };
 };
 
+const buildFlashcardItems = (chunk: VocabularyWord[]) =>
+  chunk.map((word) => ({
+    id: word.id,
+    word: word.word,
+    translation: word.translation,
+    phonetic: word.phonetic,
+    emoji: word.emoji,
+    audioSrc: word.audioSrc,
+    example: word.example,
+  }));
+
+const buildPairItems = (chunk: VocabularyWord[]) =>
+  chunk.slice(0, 3).map((word) => ({
+    id: word.id,
+    english: word.word,
+    vietnamese: word.translation,
+    emoji: word.emoji,
+    audioSrc: word.audioSrc,
+  }));
+
+const scrambleSentenceWords = (sentence: string) => {
+  const words = sentence.replace(/[^a-zA-Z0-9\s]/g, "").split(/\s+/).filter(Boolean);
+  if (words.length <= 1) return words;
+  const copy = [...words];
+  // Deterministic swap so SSR hydration is 100% consistent
+  const pivot = Math.floor(copy.length / 2);
+  const first = copy[0] ?? "";
+  const last = copy[copy.length - 1] ?? "";
+  if (first && last && first !== last) {
+    copy[0] = last;
+    copy[copy.length - 1] = first;
+  } else {
+    copy.reverse();
+  }
+  return copy;
+};
+
 const buildBuilderWordLesson = (unitId: string, topicTitle: string, chunkIndex: number, chunk: VocabularyWord[]): Lesson => {
   const primary = chunk[0];
+  const sentenceWords = scrambleSentenceWords(primary.example);
 
   const steps: LessonStep[] = [
+    {
+      id: `${primary.id}-preview`,
+      type: "flashcard-preview",
+      prompt: "Khám phá từ mới cùng Ong Bee 🐝",
+      skill: "reading",
+      visual: {
+        title: topicTitle,
+        subtitle: "Lật thẻ 3D để xem nghĩa & nghe phát âm mẫu",
+      },
+      items: buildFlashcardItems(chunk),
+    },
     {
       id: `${primary.id}-meaning`,
       type: "mcq",
@@ -121,39 +170,46 @@ const buildBuilderWordLesson = (unitId: string, topicTitle: string, chunkIndex: 
       answerId: primary.id,
     },
     {
-      id: `${primary.id}-example`,
-      type: "tap-match",
-      prompt: "Câu ví dụ này nói về từ nào?",
-      skill: "reading",
+      id: `${primary.id}-sentence`,
+      type: "sentence-builder",
+      prompt: "Ghép các từ xáo trộn thành câu hoàn chỉnh Lớp 2!",
+      skill: "writing",
       visual: {
-        title: primary.example,
-        subtitle: primary.exampleTranslation,
+        title: primary.exampleTranslation,
+        subtitle: `Mô tả từ vựng: ${primary.word}`,
         emoji: primary.emoji,
       },
-      questionAudioText: primary.exampleSpeechText ?? primary.example,
+      sentence: primary.example.replace(/[^a-zA-Z0-9\s]/g, ""),
+      translation: primary.exampleTranslation,
+      scrambledWords: sentenceWords,
       questionAudioSrc: primary.exampleAudioSrc,
-      choices: chunk.map((word) => ({
-        id: word.id,
-        label: word.word,
-        emoji: word.emoji,
-      })),
-      answerId: primary.id,
     },
     {
       id: `${primary.id}-voice`,
       type: "voice",
-      prompt: "Nhấn micro và nói lại theo Bee nhé!",
+      prompt: "Nhấn micro và nói lại câu ngắn này thật rõ nhé!",
       skill: "speaking",
       visual: {
-        title: primary.word,
-        subtitle: primary.translation,
+        title: primary.example,
+        subtitle: primary.exampleTranslation,
         emoji: primary.emoji,
-        audioSrc: primary.audioSrc,
+        audioSrc: primary.exampleAudioSrc,
       },
-      expectedText: primary.word,
-      expectedAudioText: primary.speechText ?? primary.word,
-      expectedAudioSrc: primary.audioSrc,
-      helperText: "Con chỉ cần nói gần giống từ tiếng Anh là được. Nếu thiết bị không hỗ trợ, có thể dùng chế độ giả lập.",
+      expectedText: primary.example,
+      expectedAudioText: primary.exampleSpeechText ?? primary.example,
+      expectedAudioSrc: primary.exampleAudioSrc,
+      helperText: "Con hãy phát âm từng từ thật rõ. Bee và hệ thống sẽ hỗ trợ chấm điểm 3 Sao ⭐⭐⭐.",
+    },
+    {
+      id: `${primary.id}-pairs`,
+      type: "pair-match",
+      prompt: "Chạm ghép nhanh các cặp từ và nghĩa tương ứng!",
+      skill: "reading",
+      visual: {
+        title: "Match Madness",
+        subtitle: "Ghép đúng cặp từ để nhận thưởng Sao",
+      },
+      pairs: buildPairItems(chunk),
     },
   ];
 
@@ -161,11 +217,11 @@ const buildBuilderWordLesson = (unitId: string, topicTitle: string, chunkIndex: 
     id: `${unitId}-${chunkIndex + 1}`,
     unitId,
     title: `${topicTitle} ${chunkIndex + 1}`,
-    subtitle: "Nghe - Hiểu - Nói",
-    description: `Luyện phản xạ với chủ đề ${topicTitle.toLowerCase()} qua từ, nghĩa và câu ví dụ.`,
+    subtitle: "Khám phá - Ghép câu - Nói",
+    description: `Luyện phát xạ Lớp 2 Cambridge với chủ đề ${topicTitle.toLowerCase()} qua cấu trúc câu & ghép thẻ nhanh.`,
     level: 2,
     skill: "speaking",
-    rewardStars: 3,
+    rewardStars: 4,
     targetWordIds: chunk.map((word) => word.id),
     steps,
   };

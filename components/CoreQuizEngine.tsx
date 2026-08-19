@@ -13,6 +13,9 @@ import { preloadAudio } from "@/utils/preloadAudio";
 import { TapChoiceGrid } from "@/components/interactions/TapChoiceGrid";
 import { LetterBoard } from "@/components/interactions/LetterBoard";
 import { VoiceRecorderPanel } from "@/components/interactions/VoiceRecorderPanel";
+import { PairMatchBoard } from "@/components/interactions/PairMatchBoard";
+import { SentenceBuilderBoard } from "@/components/interactions/SentenceBuilderBoard";
+import { FlashcardPreview } from "@/components/interactions/FlashcardPreview";
 import { Mascot } from "@/components/gamification/Mascot";
 
 export const CoreQuizEngine = ({
@@ -209,6 +212,38 @@ export const CoreQuizEngine = ({
               interrupt: "all",
             });
           }}
+        />
+      );
+    }
+
+    if (currentStep.type === "pair-match") {
+      return (
+        <PairMatchBoard
+          pairs={currentStep.pairs}
+          onComplete={handleCorrect}
+          onWrong={handleWrong}
+        />
+      );
+    }
+
+    if (currentStep.type === "sentence-builder") {
+      return (
+        <SentenceBuilderBoard
+          sentence={currentStep.sentence}
+          translation={currentStep.translation}
+          scrambledWords={currentStep.scrambledWords}
+          questionAudioSrc={currentStep.questionAudioSrc}
+          onComplete={handleCorrect}
+          onWrong={handleWrong}
+        />
+      );
+    }
+
+    if (currentStep.type === "flashcard-preview") {
+      return (
+        <FlashcardPreview
+          items={currentStep.items}
+          onComplete={handleCorrect}
         />
       );
     }

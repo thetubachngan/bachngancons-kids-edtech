@@ -167,6 +167,25 @@ export const LearningMap = ({
                 </div>
               );
             })}
+
+            {/* Unit Chest Node (Rương kho báu ôn tập cuối Unit) */}
+            <div id={`unit-chest-${unit.id}`} className="mt-6 flex flex-col items-center">
+              <motion.button
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.94 }}
+                onClick={() => {
+                  const lastLesson = unit.lessons[unit.lessons.length - 1];
+                  if (lastLesson) onStartLesson(lastLesson.id);
+                }}
+                className="touch-card relative flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-amber-300 border-b-8 border-amber-500 bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 text-slate-900 shadow-2xl ring-8 ring-amber-100/80"
+              >
+                <span className="text-5xl drop-shadow-md animate-bounce">🎁</span>
+                <div className="absolute -bottom-3 rounded-full bg-amber-900 px-3 py-1 text-[11px] font-black text-amber-200 shadow-md border border-amber-400">
+                  Rương Kho Báu 🌟
+                </div>
+              </motion.button>
+              <p className="mt-5 text-xs font-black text-amber-900">Ôn tập tổng hợp & nhận Thưởng lớn!</p>
+            </div>
           </div>
         </section>
       ))}

@@ -39,36 +39,39 @@ export const LearningMap = ({
 }) => {
   const { state, dispatch } = useLearningStore();
   const lastFocusedLessonRef = useRef<string | null>(null);
-  const focusedLesson = useMemo(
-    () => (focusLessonId ? curriculum.units.flatMap((unit) => unit.lessons).find((lesson) => lesson.id === focusLessonId) ?? null : null),
-    [curriculum.units, focusLessonId],
+
+  const activeTargetId = useMemo(
+    () => focusLessonId ?? state.currentLessonId ?? (unlockedLessonIds.length ? unlockedLessonIds[unlockedLessonIds.length - 1] : null),
+    [focusLessonId, state.currentLessonId, unlockedLessonIds],
   );
-  const focusedLevelTab = focusedLesson
-    ? ((Object.entries(levelMap).find(([, level]) => level === focusedLesson.level)?.[0] ?? "explorer") as LevelTab)
+
+  const targetLesson = useMemo(
+    () => (activeTargetId ? curriculum.units.flatMap((unit) => unit.lessons).find((lesson) => lesson.id === activeTargetId) ?? null : null),
+    [curriculum.units, activeTargetId],
+  );
+
+  const targetLevelTab = targetLesson
+    ? ((Object.entries(levelMap).find(([, level]) => level === targetLesson.level)?.[0] ?? "explorer") as LevelTab)
     : null;
-  const activeLevelTab = focusedLevelTab ?? state.activeLevelTab;
+
+  const activeLevelTab = targetLevelTab ?? state.activeLevelTab;
   const filteredUnits = useMemo(() => curriculum.units.filter((unit) => unit.level === levelMap[activeLevelTab]), [activeLevelTab, curriculum.units]);
 
+  // Auto-scroll smoothly to active/next lesson node on return to map
   useEffect(() => {
-    if (!focusLessonId || focusLessonId === lastFocusedLessonRef.current) {
-      return;
-    }
+    if (!activeTargetId) return;
 
     const timer = window.setTimeout(() => {
-      const lessonNode = document.getElementById(`lesson-node-${focusLessonId}`);
-      if (!lessonNode) {
-        return;
-      }
+      const lessonNode = document.getElementById(`lesson-node-${activeTargetId}`);
+      if (!lessonNode) return;
 
-      lastFocusedLessonRef.current = focusLessonId;
       lessonNode.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
-      onFocusConsumed?.();
-    }, 180);
+      lastFocusedLessonRef.current = activeTargetId;
+      if (focusLessonId) onFocusConsumed?.();
+    }, 200);
 
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [focusLessonId, onFocusConsumed]);
+    return () => window.clearTimeout(timer);
+  }, [activeTargetId, focusLessonId, onFocusConsumed]);
 
   return (
     <div className="mx-auto w-full max-w-xl select-none px-3 pb-[calc(6rem+var(--safe-bottom))] sm:px-4">

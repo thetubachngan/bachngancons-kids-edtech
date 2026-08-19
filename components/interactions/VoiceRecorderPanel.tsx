@@ -750,26 +750,26 @@ export const VoiceRecorderPanel = ({
                   {detail.word}
                 </span>
 
-                {/* Inline IPA Phonemes Directly Underneath Word */}
+                {/* Inline IPA Phonemes Directly Underneath Word (Always Visible) */}
                 {phonemes.length > 0 && (
-                  <div className="flex items-center gap-0.5 mt-0.5">
+                  <div className="flex items-center gap-1 mt-1">
                     {phonemes.map((ph, pIdx) => {
                       const isPhPerfect = ph.accuracyScore >= 80 || ph.status === "perfect";
                       const isPhClose = ph.accuracyScore >= 60 || ph.status === "close";
 
                       const phClass = isEvaluated
                         ? isPhPerfect
-                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                          ? "bg-emerald-100 text-emerald-800 border-emerald-400 font-extrabold shadow-2xs"
                           : isPhClose
-                            ? "bg-amber-100 text-amber-900 border-amber-300"
-                            : "bg-rose-100 text-rose-700 border-rose-300 animate-pulse"
-                        : "bg-slate-100 text-slate-600 border-slate-200";
+                            ? "bg-amber-100 text-amber-900 border-amber-400 font-extrabold"
+                            : "bg-rose-100 text-rose-800 border-rose-400 font-extrabold animate-pulse"
+                        : "bg-amber-100/90 text-amber-900 border-amber-300 font-black shadow-2xs";
 
                       return (
                         <span
                           key={pIdx}
-                          className={`px-1 py-0.2 rounded text-[10px] sm:text-[11px] font-mono font-bold border transition-all ${phClass}`}
-                          title={`/ ${ph.phoneme} /: ${ph.accuracyScore}% accuracy`}
+                          className={`px-1.5 py-0.5 rounded-md text-[11px] sm:text-xs font-mono border transition-all ${phClass}`}
+                          title={`Âm tiết IPA /${ph.phoneme}/: ${ph.accuracyScore}% độ chính xác`}
                         >
                           /{ph.phoneme}/
                         </span>

@@ -720,98 +720,102 @@ export const VoiceRecorderPanel = ({
   const starsCount = evaluationResult?.stars ?? 0;
 
   return (
-    <div className="space-y-3.5 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-b from-white to-sky-50/50 p-4 sm:p-6 shadow-2xl border-4 border-white/80 backdrop-blur-sm">
+    <div className="w-full max-w-lg mx-auto space-y-2.5 sm:space-y-3.5 rounded-[1.75rem] sm:rounded-[2.5rem] bg-gradient-to-b from-white via-sky-50/40 to-sky-100/30 p-3.5 sm:p-5 shadow-xl border-2 sm:border-4 border-white/90 backdrop-blur-md max-h-[calc(100dvh-110px)] overflow-y-auto custom-scrollbar">
       {/* Header text & Expected sentence */}
       <div className="text-center space-y-1">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-0.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-amber-700">
-          <Sparkles className="h-3.5 w-3.5" /> Speak & Learn
+        <div className="inline-flex items-center gap-1 rounded-full bg-amber-100/90 px-2.5 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-700 shadow-2xs">
+          <Sparkles className="h-3 w-3" /> Speak & Learn
         </div>
-        <h3 className="text-2xl sm:text-4xl font-black tracking-wide text-slate-900 drop-shadow-sm">{expectedText}</h3>
-        <p className="text-xs sm:text-sm font-bold text-slate-600">
+        <h3 className="text-xl sm:text-3xl font-black tracking-wide text-slate-900 drop-shadow-2xs leading-tight">
+          {expectedText}
+        </h3>
+        <p className="text-xs sm:text-sm font-bold text-slate-600 leading-snug">
           {evaluationResult?.feedbackText || hint || "Bé hãy nhấn micro, nghe âm mẫu rồi đọc to từ/câu trên nhé! 🐝"}
         </p>
       </div>
 
-      {/* Main Microphone Button with Commercial 3-Ring Ripple Pulse */}
-      <div className="relative flex justify-center py-2">
-        {isListening && (
-          <>
-            <motion.div
-              animate={{ scale: [1, 1.6, 2], opacity: [0.6, 0.3, 0] }}
-              transition={{ repeat: Infinity, duration: 1.8, ease: "easeOut" }}
-              className="absolute h-20 w-20 rounded-full bg-pink-400"
-            />
-            <motion.div
-              animate={{ scale: [1, 1.4, 1.8], opacity: [0.8, 0.4, 0] }}
-              transition={{ repeat: Infinity, duration: 1.8, delay: 0.4, ease: "easeOut" }}
-              className="absolute h-20 w-20 rounded-full bg-emerald-400"
-            />
-          </>
-        )}
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.92 }}
-          animate={isListening ? { scale: [1, 1.06, 1] } : { scale: 1 }}
-          transition={{ repeat: isListening ? Infinity : 0, duration: 1 }}
-          onClick={() => {
-            void toggleListening();
-          }}
-          className={`relative z-10 flex h-24 w-24 items-center justify-center rounded-full shadow-2xl border-4 transition-all duration-300 ${
-            isListening
-              ? "bg-gradient-to-tr from-pink-500 to-rose-400 text-white border-pink-200 ring-4 ring-pink-300/50"
-              : engine === "unsupported"
-                ? "bg-slate-200 text-slate-400 border-slate-300"
-                : "bg-gradient-to-tr from-emerald-400 to-teal-500 text-white border-emerald-200 shadow-emerald-200/50 ring-4 ring-emerald-100"
-          }`}
-          aria-label={buttonLabel}
-        >
-          {isListening ? (
-            <Mic className="h-10 w-10 animate-pulse" />
-          ) : (
-            <MicOff className="h-10 w-10 drop-shadow-md" />
+      {/* Mobile Microphone & Wave Equalizer Station */}
+      <div className="flex flex-col items-center justify-center py-1 gap-2">
+        <div className="relative flex items-center justify-center">
+          {isListening && (
+            <>
+              <motion.div
+                animate={{ scale: [1, 1.5, 1.9], opacity: [0.6, 0.3, 0] }}
+                transition={{ repeat: Infinity, duration: 1.6, ease: "easeOut" }}
+                className="absolute h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-pink-400"
+              />
+              <motion.div
+                animate={{ scale: [1, 1.3, 1.7], opacity: [0.8, 0.4, 0] }}
+                transition={{ repeat: Infinity, duration: 1.6, delay: 0.3, ease: "easeOut" }}
+                className="absolute h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-emerald-400"
+              />
+            </>
           )}
-        </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.92 }}
+            animate={isListening ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+            transition={{ repeat: isListening ? Infinity : 0, duration: 0.9 }}
+            onClick={() => {
+              void toggleListening();
+            }}
+            className={`relative z-10 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full shadow-xl border-4 transition-all duration-300 active:translate-y-[2px] ${
+              isListening
+                ? "bg-gradient-to-tr from-pink-500 to-rose-400 text-white border-pink-200 ring-4 ring-pink-300/40"
+                : engine === "unsupported"
+                  ? "bg-slate-200 text-slate-400 border-slate-300"
+                  : "bg-gradient-to-tr from-emerald-400 to-teal-500 text-white border-emerald-200 shadow-emerald-200/40 ring-4 ring-emerald-100"
+            }`}
+            aria-label={buttonLabel}
+          >
+            {isListening ? (
+              <Mic className="h-8 w-8 sm:h-10 sm:w-10 animate-pulse" />
+            ) : (
+              <MicOff className="h-8 w-8 sm:h-10 sm:w-10 drop-shadow-md" />
+            )}
+          </motion.button>
+        </div>
+
+        {/* Compact 7-bar Wave Visualizer */}
+        <div className="flex items-end justify-center gap-1.5 rounded-full bg-slate-900/5 px-3 py-1.5 border border-slate-200/50 shadow-inner w-36 sm:w-44">
+          {waveLevels.map((levelValue, index) => {
+            const colors = [
+              "bg-emerald-400",
+              "bg-teal-400",
+              "bg-cyan-400",
+              "bg-sky-400",
+              "bg-amber-400",
+              "bg-rose-400",
+              "bg-pink-400",
+            ];
+            return (
+              <motion.div
+                key={index}
+                animate={{ height: `${Math.max(10, levelValue * 36)}px` }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`w-2.5 sm:w-3 rounded-full shadow-2xs ${
+                  isListening ? colors[index % colors.length] : "bg-slate-300"
+                }`}
+              />
+            );
+          })}
+        </div>
       </div>
 
-      {/* Real-time 7-bar Audio Wave Equalizer */}
-      <div className="flex items-end justify-center gap-2.5 rounded-2xl bg-slate-900/5 px-4 py-4 backdrop-blur-xs border border-slate-200/60 shadow-inner">
-        {waveLevels.map((levelValue, index) => {
-          const colors = [
-            "bg-emerald-400",
-            "bg-teal-400",
-            "bg-cyan-400",
-            "bg-sky-400",
-            "bg-amber-400",
-            "bg-rose-400",
-            "bg-pink-400",
-          ];
-          return (
-            <motion.div
-              key={index}
-              animate={{ height: `${Math.max(16, levelValue * 58)}px` }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className={`w-3.5 rounded-full shadow-sm ${
-                isListening ? colors[index % colors.length] : "bg-slate-300"
-              }`}
-            />
-          );
-        })}
-      </div>
-
-      {/* Real-Time Transcript or Prompt Box */}
-      <div className="rounded-2xl bg-white p-3.5 text-center font-bold text-slate-700 shadow-sm border border-slate-100 min-h-[50px] flex items-center justify-center">
+      {/* Real-Time Transcript Bar */}
+      <div className="rounded-xl sm:rounded-2xl bg-white/90 p-2.5 text-center font-bold text-slate-700 shadow-2xs border border-slate-100/80 min-h-[42px] flex items-center justify-center">
         {transcript ? (
-          <span className="text-base text-sky-950 font-black">"{transcript}"</span>
+          <span className="text-sm sm:text-base text-sky-950 font-black">"{transcript}"</span>
         ) : isListening ? (
-          <span className="text-emerald-600 animate-pulse font-extrabold">🐝 Bé hãy đọc theo mẫu ngay bây giờ...</span>
+          <span className="text-xs sm:text-sm text-emerald-600 animate-pulse font-extrabold">🐝 Bé đọc theo mẫu nhé...</span>
         ) : (
-          <span className="text-slate-400 text-sm">Chưa có giọng nói. Bấm nút micro để bắt đầu!</span>
+          <span className="text-slate-400 text-xs sm:text-sm">Bấm nút micro để bắt đầu!</span>
         )}
       </div>
 
       {/* Target Word Pills with Color-Coded Feedback & IPA Phoneme Badges */}
-      <div className="flex flex-wrap justify-center gap-3 py-1">
+      <div className="flex flex-wrap justify-center gap-2 py-0.5">
         {wordDetails.map((detail, idx) => {
           const isPerfect = detail.status === "perfect";
           const isClose = detail.status === "close";
@@ -822,8 +826,8 @@ export const VoiceRecorderPanel = ({
               key={`${detail.word}-${idx}`}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: idx * 0.05 }}
-              className={`flex flex-col items-center p-2.5 rounded-2xl border-b-4 shadow-sm transition-all ${
+              transition={{ delay: idx * 0.04 }}
+              className={`flex flex-col items-center px-3 py-1.5 rounded-xl sm:rounded-2xl border-b-3 shadow-2xs transition-all ${
                 isPerfect
                   ? "bg-emerald-500 text-white border-emerald-700 shadow-emerald-200"
                   : isClose
@@ -831,11 +835,11 @@ export const VoiceRecorderPanel = ({
                     : "bg-slate-100 text-slate-500 border-slate-300"
               }`}
             >
-              <span className="text-base font-black tracking-wide">{detail.word}</span>
+              <span className="text-xs sm:text-sm font-black tracking-wide">{detail.word}</span>
 
               {/* Commercial AI IPA Phoneme Badges (Green >= 80%, Yellow 60-79%, Red < 60%) */}
               {phonemes.length > 0 && (
-                <div className="flex gap-1 mt-1.5 flex-wrap justify-center">
+                <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center">
                   {phonemes.map((ph, pIdx) => {
                     const isPhPerfect = ph.accuracyScore >= 80 || ph.status === "perfect";
                     const isPhClose = ph.accuracyScore >= 60 || ph.status === "close";
@@ -843,9 +847,9 @@ export const VoiceRecorderPanel = ({
                     return (
                       <span
                         key={pIdx}
-                        className={`px-1.5 py-0.5 rounded-md text-[11px] font-mono font-black border transition-all ${
+                        className={`px-1 py-0.2 rounded text-[10px] font-mono font-black border transition-all ${
                           isPhPerfect
-                            ? "bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs"
+                            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
                             : isPhClose
                               ? "bg-amber-100 text-amber-900 border-amber-300"
                               : "bg-rose-100 text-rose-700 border-rose-300 animate-pulse"
@@ -863,41 +867,41 @@ export const VoiceRecorderPanel = ({
         })}
       </div>
 
-      {/* Always Visible Skip Button for Voice Steps */}
+      {/* Always Visible Skip Button */}
       {onSkip && evaluationResult?.status !== "correct" && (
-        <div className="flex justify-center py-1">
+        <div className="flex justify-center pt-0.5">
           <button
             type="button"
             onClick={onSkip}
-            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-amber-300 bg-amber-100/90 px-4 py-2 text-xs sm:text-sm font-black text-amber-950 shadow-sm transition hover:bg-amber-200 active:scale-95"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-100/90 px-3 py-1.5 text-xs font-black text-amber-950 shadow-2xs transition hover:bg-amber-200 active:scale-95"
           >
-            Bỏ qua tạm thời (Thử lại sau) ⏩
+            Bỏ qua tạm thời ⏩
           </button>
         </div>
       )}
 
-      {/* Evaluation Results Card: Stars + Dual Audio Playback ("Nghe mẫu chuẩn" vs "Nghe lại giọng con") */}
+      {/* Mobile-Optimized Evaluation Results Card */}
       <AnimatePresence>
         {status === "evaluated" && evaluationResult && (
           <motion.div
-            initial={{ opacity: 0, y: 15, scale: 0.95 }}
+            initial={{ opacity: 0, y: 10, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="space-y-4 rounded-3xl border-2 border-amber-200 bg-amber-50/90 p-5 shadow-lg text-center"
+            className="space-y-2.5 rounded-2xl border-2 border-amber-200 bg-amber-50/95 p-3.5 shadow-md text-center"
           >
             {/* 3-Star Rating Badge */}
-            <div className="flex justify-center items-center gap-2">
+            <div className="flex justify-center items-center gap-1.5">
               {[1, 2, 3].map((starIdx) => (
                 <motion.div
                   key={starIdx}
-                  initial={{ scale: 0, rotate: -30 }}
-                  animate={{ scale: starIdx <= starsCount ? 1.25 : 0.9, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 400, delay: starIdx * 0.15 }}
+                  initial={{ scale: 0, rotate: -20 }}
+                  animate={{ scale: starIdx <= starsCount ? 1.15 : 0.85, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 400, delay: starIdx * 0.12 }}
                 >
                   <Star
-                    className={`h-9 w-9 ${
+                    className={`h-7 w-7 ${
                       starIdx <= starsCount
-                        ? "fill-amber-400 text-amber-500 drop-shadow-md"
+                        ? "fill-amber-400 text-amber-500 drop-shadow-xs"
                         : "fill-slate-200 text-slate-300"
                     }`}
                   />
@@ -905,54 +909,54 @@ export const VoiceRecorderPanel = ({
               ))}
             </div>
 
-            <p className="text-base font-black text-amber-900">{evaluationResult.feedbackText}</p>
+            <p className="text-xs sm:text-sm font-black text-amber-900 leading-tight">{evaluationResult.feedbackText}</p>
 
-            {/* Commercial Feature: Dual Sound Buttons (Native Sample vs Child Recording) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            {/* Commercial Feature: Dual Sound Buttons */}
+            <div className="grid grid-cols-2 gap-2 pt-0.5">
               <button
                 type="button"
                 onClick={replaySample}
-                className="flex items-center justify-center gap-2 rounded-2xl border-b-4 border-sky-600 bg-sky-400 px-4 py-3 text-sm font-black text-sky-950 shadow-md active:translate-y-[2px] active:border-b-2"
+                className="flex items-center justify-center gap-1.5 rounded-xl border-b-3 border-sky-600 bg-sky-400 px-2.5 py-2 text-xs font-black text-sky-950 shadow-xs active:translate-y-[2px] active:border-b-1"
               >
-                <Volume2 className="h-5 w-5" />
-                🔊 Nghe mẫu chuẩn
+                <Volume2 className="h-4 w-4 shrink-0" />
+                🔊 Nghe mẫu
               </button>
 
               {recordedAudioUrl ? (
                 <button
                   type="button"
                   onClick={playChildRecordedAudio}
-                  className={`flex items-center justify-center gap-2 rounded-2xl border-b-4 px-4 py-3 text-sm font-black shadow-md active:translate-y-[2px] active:border-b-2 transition-all ${
+                  className={`flex items-center justify-center gap-1.5 rounded-xl border-b-3 px-2.5 py-2 text-xs font-black shadow-xs active:translate-y-[2px] active:border-b-1 transition-all ${
                     isPlayingChildAudio
                       ? "bg-rose-500 text-white border-rose-700"
                       : "bg-emerald-400 text-emerald-950 border-emerald-600"
                   }`}
                 >
-                  {isPlayingChildAudio ? <Square className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
-                  {isPlayingChildAudio ? "Đang phát..." : "🎧 Nghe lại giọng con"}
+                  {isPlayingChildAudio ? <Square className="h-4 w-4 fill-current shrink-0" /> : <Play className="h-4 w-4 fill-current shrink-0" />}
+                  {isPlayingChildAudio ? "Đang phát..." : "🎧 Nghe lại giọng"}
                 </button>
               ) : (
                 <button
                   type="button"
                   disabled
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-400 border-b-4 border-slate-300"
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-200 px-2.5 py-2 text-xs font-bold text-slate-400 border-b-3 border-slate-300"
                 >
-                  🎧 Nghe lại giọng con
+                  🎧 Nghe lại giọng
                 </button>
               )}
             </div>
 
             {/* Action Buttons: Retry, Skip & Continue */}
-            <div className="flex flex-wrap justify-center gap-2.5 pt-2">
+            <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
               <button
                 type="button"
                 onClick={() => {
                   resetSessionVisuals();
                   void toggleListening();
                 }}
-                className="flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-black text-slate-700 shadow-2xs transition hover:bg-slate-50 active:scale-95"
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-3.5 w-3.5" />
                 Thử lại 🔄
               </button>
 
@@ -960,9 +964,9 @@ export const VoiceRecorderPanel = ({
                 <button
                   type="button"
                   onClick={onSkip}
-                  className="flex items-center justify-center gap-2 rounded-2xl border-2 border-amber-300 bg-amber-100 px-4 py-2.5 text-xs sm:text-sm font-black text-amber-900 shadow-sm transition hover:bg-amber-200 active:scale-95"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-100 px-3 py-1.5 text-xs font-black text-amber-900 shadow-2xs transition hover:bg-amber-200 active:scale-95"
                 >
-                  Bỏ qua tạm thời ⏩
+                  Bỏ qua ⏩
                 </button>
               )}
 
@@ -970,7 +974,7 @@ export const VoiceRecorderPanel = ({
                 <button
                   type="button"
                   onClick={onComplete}
-                  className="flex items-center justify-center gap-2 rounded-2xl border-b-4 border-emerald-600 bg-emerald-500 px-6 py-2.5 text-xs sm:text-sm font-black text-white shadow-md active:translate-y-[2px] active:border-b-2"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border-b-3 border-emerald-600 bg-emerald-500 px-5 py-2 text-xs sm:text-sm font-black text-white shadow-md active:translate-y-[2px] active:border-b-1"
                 >
                   Tiếp tục 🚀
                 </button>
@@ -980,19 +984,19 @@ export const VoiceRecorderPanel = ({
         )}
       </AnimatePresence>
 
-      {/* Hint card for slow response */}
+      {/* Hint card */}
       {showHintCard && status !== "evaluated" && (
-        <div className="space-y-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-center shadow-sm">
-          <p className="text-sm font-black text-amber-800">Bé thử phát âm to hơn một chút nhé! 🐝</p>
-          <button type="button" onClick={replaySample} className="kid-button w-full border-sky-600 bg-sky-300 text-sky-950">
-            <Volume2 className="h-4 w-4" />
+        <div className="space-y-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-center shadow-2xs">
+          <p className="text-xs font-black text-amber-800">Bé đọc to hơn một chút nhé! 🐝</p>
+          <button type="button" onClick={replaySample} className="kid-button w-full border-sky-600 bg-sky-300 text-sky-950 py-1.5 text-xs">
+            <Volume2 className="h-3.5 w-3.5" />
             Nghe lại âm mẫu chuẩn
           </button>
         </div>
       )}
 
       {error && status !== "evaluated" && (
-        <div className="text-center text-sm font-bold text-rose-600 bg-rose-50 rounded-xl p-2.5 border border-rose-200">
+        <div className="text-center text-xs font-bold text-rose-600 bg-rose-50 rounded-xl p-2 border border-rose-200">
           {error}
         </div>
       )}

@@ -718,14 +718,14 @@ export const VoiceRecorderPanel = ({
   const starsCount = evaluationResult?.stars ?? 0;
 
   return (
-    <div className="space-y-4 rounded-[2.5rem] bg-gradient-to-b from-white to-sky-50/50 p-6 shadow-2xl border-4 border-white/80 backdrop-blur-sm">
+    <div className="space-y-3.5 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-b from-white to-sky-50/50 p-4 sm:p-6 shadow-2xl border-4 border-white/80 backdrop-blur-sm">
       {/* Header text & Expected sentence */}
       <div className="text-center space-y-1">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3.5 py-1 text-xs font-black uppercase tracking-widest text-amber-700">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-0.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-amber-700">
           <Sparkles className="h-3.5 w-3.5" /> Speak & Learn
         </div>
-        <h3 className="text-3xl sm:text-4xl font-black tracking-wide text-slate-900 drop-shadow-sm">{expectedText}</h3>
-        <p className="text-sm font-bold text-slate-600">
+        <h3 className="text-2xl sm:text-4xl font-black tracking-wide text-slate-900 drop-shadow-sm">{expectedText}</h3>
+        <p className="text-xs sm:text-sm font-bold text-slate-600">
           {evaluationResult?.feedbackText || hint || "Bé hãy nhấn micro, nghe âm mẫu rồi đọc to từ/câu trên nhé! 🐝"}
         </p>
       </div>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fredoka } from "next/font/google";
 
 import "./globals.css";
@@ -8,6 +8,15 @@ const fredoka = Fredoka({
   weight: ["400", "500", "600", "700"],
   variable: "--font-fredoka",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#fffaf0",
+};
 
 export const metadata: Metadata = {
   title: "Penguin English",

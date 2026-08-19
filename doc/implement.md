@@ -32,7 +32,13 @@
 | ├── `[UID: IMP-SEC-VI-1]` | ├── 1. Đánh giá Chuyên môn & Tăng độ khó theo cấp độ Lớp 2 | Tiểu mục |
 | ├── `[UID: IMP-SEC-VI-2]` | ├── 2. Bổ sung Bộ Cấu trúc Câu Giao tiếp & Phonics Đánh vần | Tiểu mục |
 | └── `[UID: IMP-SEC-VI-3]` | └── 3. Luồng Tương tác Ghép Câu (`SentenceBuilderBoard.tsx`) | Tiểu mục |
-| `[UID: IMP-SEC-VII]` | **VII. Cấu trúc Thư mục & Kế hoạch Chi tiết Triển khai** | Mục lớn |
+| `[UID: IMP-SEC-VII]` | **VII. Cấu trúc Thư mục & Các Cấu phần Chính trong Mã nguồn** | Mục lớn |
+| `[UID: IMP-SEC-VIII]` | **VIII. Kế hoạch Nâng cấp Mở rộng Từ vựng Chuẩn Commercial (+70 Từ vựng)** | Mục lớn |
+| ├── `[UID: IMP-SEC-VIII-1]` | ├── 1. Chủ đề Phonics Đánh vần (`explorer-phonics`) | Tiểu mục |
+| ├── `[UID: IMP-SEC-VIII-2]` | ├── 2. Chủ đề Trang phục & Phụ kiện (`builder-clothes`) | Tiểu mục |
+| ├── `[UID: IMP-SEC-VIII-3]` | ├── 3. Chủ đề Động từ Hành động (`builder-action-verbs`) | Tiểu mục |
+| ├── `[UID: IMP-SEC-VIII-4]` | ├── 4. Chủ đề Địa điểm & Thiên nhiên (`builder-places-nature`) | Tiểu mục |
+| └── `[UID: IMP-SEC-VIII-5]` | └── 5. Chủ đề Cảm xúc & Tính từ Miêu tả (`builder-emotions-adjectives`) | Tiểu mục |
 
 ---
 
@@ -150,3 +156,41 @@ Bảo tồn 100% kịch bản hội thoại gắn ID dạng `scenario-[topic]-[i
 └── store/
     └── learningStore.tsx                # Quản lý tiến trình, sao, streak, localStorage
 ```
+
+---
+
+### VIII. KẾ HOẠCH NÂNG CẤP MỞ RỘNG TỪ VỰNG CHUẨN COMMERCIAL (+70 TỪ VỰNG Theo ID) [UID: IMP-SEC-VIII]
+
+Để đạt độ phong phú ngang tầm Lingokids, Monkey Junior và bộ từ vựng chuẩn Cambridge Pre-A1 Starters, chúng ta sẽ mở rộng thêm 5 Chủ đề Từ vựng Mới (+70 từ vựng), được gán ID duy nhất và phân bổ trực tiếp vào 3 Lộ trình Học tập:
+
+1. **Chủ đề Phonics Đánh vần Ghép Âm (`explorer-phonics`)** [UID: IMP-SEC-VIII-1]:
+   * **Cấp độ**: Explorer (5-6 tuổi).
+   * **Danh sách từ vựng (16 từ)**:
+     - Các họ vần `-at`: `cat`, `hat`, `mat`, `rat` (ID: `word-phonics-at-cat`,...)
+     - Các họ vần `-an`: `can`, `fan`, `man`, `pan` (ID: `word-phonics-an-can`,...)
+     - Các họ vần `-ig` / `-og`: `pig`, `big`, `dog`, `log` (ID: `word-phonics-ig-pig`,...)
+     - Các họ vần `-un` / `-up`: `sun`, `run`, `cup`, `pup` (ID: `word-phonics-un-sun`,...)
+
+2. **Chủ đề Trang phục & Phụ kiện (`builder-clothes`)** [UID: IMP-SEC-VIII-2]:
+   * **Cấp độ**: Builder (7-8 tuổi - Lớp 2 Cambridge).
+   * **Danh sách từ vựng (12 từ)**:
+     - `shirt` (Áo sơ mi), `t-shirt` (Áo phông), `dress` (Váy liền), `skirt` (Chân váy), `pants` (Quần dài), `shorts` (Quần đùi), `shoes` (Đôi giày), `socks` (Đôi tất), `jacket` (Áo khoác), `hat` (Cái mũ), `glasses` (Kính mắt), `watch` (Đồng hồ đeo tay).
+     - ID dạng: `word-clothes-shirt`, `word-clothes-dress`,...
+
+3. **Chủ đề Động từ Hành động (`builder-action-verbs`)** [UID: IMP-SEC-VIII-3]:
+   * **Cấp độ**: Builder (7-8 tuổi - Lớp 2 Cambridge).
+   * **Danh sách từ vựng (15 từ)**:
+     - `run` (Chạy), `jump` (Nhảy cao), `swim` (Bơi), `fly` (Bay), `climb` (Leo trèo), `eat` (Ăn), `drink` (Uống), `sleep` (Ngủ), `wash` (Rửa/Gội), `draw` (Vẽ), `sing` (Hát), `dance` (Nhảy múa), `read` (Đọc), `write` (Viết), `clap` (Vỗ tay).
+     - ID dạng: `word-verbs-run`, `word-verbs-jump`,...
+
+4. **Chủ đề Địa điểm & Thiên nhiên (`builder-places-nature`)** [UID: IMP-SEC-VIII-4]:
+   * **Cấp độ**: Builder (7-8 tuổi - Lớp 2 Cambridge).
+   * **Danh sách từ vựng (12 từ)**:
+     - `park` (Công viên), `beach` (Bãi biển), `farm` (Nông trại), `shop` (Cửa hàng), `hospital` (Bệnh viện), `street` (Đường phố), `river` (Dòng sông), `sea` (Biển), `tree` (Cây xanh), `flower` (Bông hoa), `sun` (Mặt trời), `moon` (Mặt trăng).
+     - ID dạng: `word-places-park`, `word-places-beach`,...
+
+5. **Chủ đề Cảm xúc & Tính từ Miêu tả (`builder-emotions-adjectives`)** [UID: IMP-SEC-VIII-5]:
+   * **Cấp độ**: Builder (7-8 tuổi - Lớp 2 Cambridge).
+   * **Danh sách từ vựng (12 từ)**:
+     - `happy` (Vui vẻ), `sad` (Buồn ã), `angry` (Tức giận), `tired` (Mệt mỏi), `hungry` (Đói bụng), `thirsty` (Khát nước), `big` (To lớn), `small` (Nhỏ bé), `fast` (Nhanh), `slow` (Chậm), `hot` (Nóng), `cold` (Lạnh).
+     - ID dạng: `word-emotions-happy`, `word-emotions-sad`,...

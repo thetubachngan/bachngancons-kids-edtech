@@ -137,21 +137,21 @@ function AppShell() {
                   Chọn một bài học trên bản đồ, bấm nghe từ và để bé học theo từng bước thật rõ ràng, vui nhộn.
                 </p>
 
-                <div className="grid gap-3 sm:flex sm:flex-wrap">
-                  <div className="stat-chip bg-yellow-200 text-yellow-950">
+                <div className="flex flex-wrap gap-2">
+                  <div className="stat-chip bg-yellow-200 text-yellow-950 px-3 py-1.5 text-xs sm:text-sm">
                     <Star className="h-4 w-4" />
                     {state.stars} sao
                   </div>
                   {isPreparingLesson ? (
-                    <div className="stat-chip bg-violet-200 text-violet-950">
+                    <div className="stat-chip bg-violet-200 text-violet-950 px-3 py-1.5 text-xs sm:text-sm">
                       Đang tải bài học...
                     </div>
                   ) : null}
-                  <div className="stat-chip bg-emerald-200 text-emerald-950">
+                  <div className="stat-chip bg-emerald-200 text-emerald-950 px-3 py-1.5 text-xs sm:text-sm">
                     <Trophy className="h-4 w-4" />
                     {completedLessonCount}/{totalLessonCount} lessons
                   </div>
-                  <div className="stat-chip bg-sky-200 text-sky-950">
+                  <div className="stat-chip bg-sky-200 text-sky-950 px-3 py-1.5 text-xs sm:text-sm">
                     <Star className="h-4 w-4" />
                     {unlockedLessonCount} unlocked
                   </div>

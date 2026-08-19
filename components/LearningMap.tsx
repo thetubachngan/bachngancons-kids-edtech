@@ -72,15 +72,33 @@ export const LearningMap = ({
 
   return (
     <div className="mx-auto w-full max-w-xl select-none px-3 pb-[calc(6rem+var(--safe-bottom))] sm:px-4">
-      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <button type="button" onClick={() => dispatch({ type: "SET_ACTIVE_LEVEL", level: "explorer" })} className={`kid-button justify-center border-b-4 ${activeLevelTab === "explorer" ? tabStyles.explorer : "border-slate-200 bg-white text-slate-600"}`}>
-          🟢 Explorer (5-6 tuổi)
+      <div className="mb-5 grid grid-cols-3 gap-1.5 sm:gap-3">
+        <button
+          type="button"
+          onClick={() => dispatch({ type: "SET_ACTIVE_LEVEL", level: "explorer" })}
+          className={`kid-button px-2 py-2.5 text-xs sm:px-4 sm:py-3 sm:text-sm justify-center border-b-4 ${
+            activeLevelTab === "explorer" ? tabStyles.explorer : "border-slate-200 bg-white text-slate-600"
+          }`}
+        >
+          🟢 Explorer (5-6t)
         </button>
-        <button type="button" onClick={() => dispatch({ type: "SET_ACTIVE_LEVEL", level: "builder" })} className={`kid-button justify-center border-b-4 ${activeLevelTab === "builder" ? tabStyles.builder : "border-slate-200 bg-white text-slate-600"}`}>
-          🔵 Builder (7-8 tuổi)
+        <button
+          type="button"
+          onClick={() => dispatch({ type: "SET_ACTIVE_LEVEL", level: "builder" })}
+          className={`kid-button px-2 py-2.5 text-xs sm:px-4 sm:py-3 sm:text-sm justify-center border-b-4 ${
+            activeLevelTab === "builder" ? tabStyles.builder : "border-slate-200 bg-white text-slate-600"
+          }`}
+        >
+          🔵 Builder (7-8t)
         </button>
-        <button type="button" onClick={() => dispatch({ type: "SET_ACTIVE_LEVEL", level: "challenger" })} className={`kid-button justify-center border-b-4 ${activeLevelTab === "challenger" ? tabStyles.challenger : "border-slate-200 bg-white text-slate-600"}`}>
-          🟠 Challenger (9+ tuổi)
+        <button
+          type="button"
+          onClick={() => dispatch({ type: "SET_ACTIVE_LEVEL", level: "challenger" })}
+          className={`kid-button px-2 py-2.5 text-xs sm:px-4 sm:py-3 sm:text-sm justify-center border-b-4 ${
+            activeLevelTab === "challenger" ? tabStyles.challenger : "border-slate-200 bg-white text-slate-600"
+          }`}
+        >
+          🟠 Challenger (9t+)
         </button>
       </div>
       {filteredUnits.map((unit) => (
@@ -100,8 +118,8 @@ export const LearningMap = ({
               const nodeState = getNodeState(lesson.id, unlockedLessonIds, completedLessonIds, currentLessonId);
               const isClickable = nodeState !== "locked";
 
-              // Stagger offsets for snake path: [0, 48, 0, -48]
-              const offsetPattern = [0, 26, 0, -26];
+              // Stagger offsets for snake path optimized for 360px+ mobile screens
+              const offsetPattern = [0, 20, 0, -20];
               const offsetX = offsetPattern[index % offsetPattern.length];
 
               return (

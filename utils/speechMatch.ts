@@ -2,10 +2,26 @@ export type SpeechMatchStatus = "correct" | "almost-correct" | "wrong";
 
 export type WordMatchStatus = "perfect" | "close" | "missing";
 
+export type PhonemeScore = {
+  phoneme: string;
+  accuracyScore: number; // 0 - 100
+  status: "perfect" | "close" | "missing";
+  errorType?: "None" | "Omission" | "Insertion" | "Mispronunciation";
+};
+
+export type CommercialWordScore = {
+  word: string;
+  accuracyScore: number;
+  status: WordMatchStatus;
+  phonemes: PhonemeScore[];
+};
+
 export type WordDetail = {
   word: string;
   status: WordMatchStatus;
   score: number;
+  accuracyScore?: number;
+  phonemes?: PhonemeScore[];
 };
 
 export type SpeechMatchResult = {
@@ -16,6 +32,8 @@ export type SpeechMatchResult = {
   actual: string;
   feedbackText: string;
   wordDetails: WordDetail[];
+  overallAccuracy?: number;
+  commercialWords?: CommercialWordScore[];
 };
 
 export type SpeechDifficulty = 1 | 2 | 3;
@@ -158,6 +176,140 @@ const getThresholds = (difficulty: SpeechDifficulty, tokenCount: number) => {
   };
 };
 
+const WORD_PHONEME_MAP: Record<string, string[]> = {
+  cat: ["k", "æ", "t"],
+  dog: ["d", "ɒ", "ɡ"],
+  apple: ["æ", "p", "əl"],
+  red: ["r", "ɛ", "d"],
+  blue: ["b", "l", "uː"],
+  green: ["ɡ", "r", "iː", "n"],
+  yellow: ["j", "ɛ", "l", "oʊ"],
+  pink: ["p", "ɪ", "ŋ", "k"],
+  three: ["θ", "r", "iː"],
+  four: ["f", "ɔː", "r"],
+  five: ["f", "aɪ", "v"],
+  six: ["s", "ɪ", "k", "s"],
+  seven: ["s", "ɛ", "v", "ən"],
+  eight: ["eɪ", "t"],
+  nine: ["n", "aɪ", "n"],
+  ten: ["t", "ɛ", "n"],
+  one: ["w", "ʌ", "n"],
+  two: ["t", "uː"],
+  ball: ["b", "ɔː", "l"],
+  fish: ["f", "ɪ", "ʃ"],
+  duck: ["d", "ʌ", "k"],
+  car: ["k", "ɑː", "r"],
+  bus: ["b", "ʌ", "s"],
+  hat: ["h", "æ", "t"],
+  star: ["s", "t", "ɑː", "r"],
+  sun: ["s", "ʌ", "n"],
+  milk: ["m", "ɪ", "l", "k"],
+  egg: ["ɛ", "ɡ"],
+  book: ["b", "ʊ", "k"],
+  pen: ["p", "ɛ", "n"],
+  boy: ["b", "ɔɪ"],
+  girl: ["ɡ", "ɜː", "l"],
+  bird: ["b", "ɜː", "d"],
+  tree: ["t", "r", "iː"],
+  house: ["h", "aʊ", "s"],
+  monkey: ["m", "ʌ", "ŋ", "k", "i"],
+  lion: ["l", "aɪ", "ən"],
+  bear: ["b", "ɛ", "r"],
+  banana: ["b", "ə", "n", "æ", "n", "ə"],
+  elephant: ["ɛ", "l", "ɪ", "f", "ən", "t"],
+  frog: ["f", "r", "ɒ", "ɡ"],
+  rabbit: ["r", "æ", "b", "ɪ", "t"],
+  tiger: ["t", "aɪ", "ɡ", "ər"],
+  zebra: ["z", "iː", "b", "r", "ə"],
+  water: ["w", "ɔː", "t", "ər"],
+  orange: ["ɒ", "r", "ɪ", "n", "dʒ"],
+  purple: ["p", "ɜː", "p", "əl"],
+  white: ["w", "aɪ", "t"],
+  black: ["b", "l", "æ", "k"],
+  run: ["r", "ʌ", "n"],
+  jump: ["dʒ", "ʌ", "m", "p"],
+  swim: ["s", "w", "ɪ", "m"],
+  fly: ["f", "l", "aɪ"],
+  climb: ["k", "l", "aɪ", "m"],
+  eat: ["iː", "t"],
+  drink: ["d", "r", "ɪ", "ŋ", "k"],
+  sleep: ["s", "l", "iː", "p"],
+  wash: ["w", "ɒ", "ʃ"],
+  draw: ["d", "r", "ɔː"],
+  sing: ["s", "ɪ", "ŋ"],
+  dance: ["d", "æ", "n", "s"],
+  read: ["r", "iː", "d"],
+  write: ["r", "aɪ", "t"],
+  clap: ["k", "l", "æ", "p"],
+  shirt: ["ʃ", "ɜː", "t"],
+  dress: ["d", "r", "ɛ", "s"],
+  skirt: ["s", "k", "ɜː", "t"],
+  pants: ["p", "æ", "n", "t", "s"],
+  shorts: ["ʃ", "ɔː", "t", "s"],
+  shoes: ["ʃ", "uː", "z"],
+  socks: ["s", "ɒ", "k", "s"],
+  jacket: ["dʒ", "æ", "k", "ɪ", "t"],
+  park: ["p", "ɑː", "k"],
+  beach: ["b", "iː", "tʃ"],
+  farm: ["f", "ɑː", "m"],
+  shop: ["ʃ", "ɒ", "p"],
+  hospital: ["h", "ɒ", "s", "p", "ɪ", "t", "əl"],
+  street: ["s", "t", "r", "iː", "t"],
+  happy: ["h", "æ", "p", "i"],
+  sad: ["s", "æ", "d"],
+  angry: ["æ", "ŋ", "ɡ", "r", "i"],
+  tired: ["t", "aɪ", "əd"],
+  hungry: ["h", "ʌ", "ŋ", "ɡ", "r", "i"],
+  thirsty: ["θ", "ɜː", "s", "t", "i"],
+};
+
+export const getPhonemesForWord = (word: string): string[] => {
+  const normalized = word.toLowerCase().trim();
+  if (WORD_PHONEME_MAP[normalized]) {
+    return WORD_PHONEME_MAP[normalized];
+  }
+  return normalized.split("").filter(Boolean);
+};
+
+export const evaluatePhonemesForWord = (
+  word: string,
+  matchStatus: WordMatchStatus,
+  score: number,
+): PhonemeScore[] => {
+  const phonemes = getPhonemesForWord(word);
+  if (!phonemes.length) return [];
+
+  return phonemes.map((ph, idx) => {
+    if (matchStatus === "perfect") {
+      const accuracyScore = Math.round(92 + (score > 0.95 ? 8 : 4));
+      return {
+        phoneme: ph,
+        accuracyScore: Math.min(100, accuracyScore),
+        status: "perfect",
+        errorType: "None",
+      };
+    } else if (matchStatus === "close") {
+      const isTrailing = idx === phonemes.length - 1 && phonemes.length > 1;
+      const accuracyScore = isTrailing ? Math.round(58 + score * 20) : Math.round(78 + score * 15);
+      const phonemeStatus = accuracyScore >= 80 ? "perfect" : "close";
+      return {
+        phoneme: ph,
+        accuracyScore: Math.min(90, Math.max(50, accuracyScore)),
+        status: phonemeStatus,
+        errorType: accuracyScore >= 80 ? "None" : "Mispronunciation",
+      };
+    } else {
+      const accuracyScore = Math.round(score * 40);
+      return {
+        phoneme: ph,
+        accuracyScore: Math.min(45, Math.max(10, accuracyScore)),
+        status: "missing",
+        errorType: idx === phonemes.length - 1 ? "Omission" : "Mispronunciation",
+      };
+    }
+  });
+};
+
 export const evaluateWordDetails = (
   expectedText: string,
   actualText: string,
@@ -171,36 +323,51 @@ export const evaluateWordDetails = (
   }
 
   return expectedTokens.map((expectedWord, index) => {
+    let status: WordMatchStatus = "missing";
+    let score = 0;
+
     if (!actualTokens.length) {
-      return { word: expectedWord, status: "missing", score: 0 };
+      status = "missing";
+      score = 0;
+    } else if (actualTokens.includes(expectedWord)) {
+      status = "perfect";
+      score = 1;
+    } else if (actualTokens.some((act) => isPhoneticallyEquivalent(expectedWord, act))) {
+      status = "perfect";
+      score = 0.92;
+    } else {
+      const positionalSpoken = actualTokens[index] ?? actualTokens[0] ?? "";
+      if (positionalSpoken && (expectedWord.startsWith(positionalSpoken) || positionalSpoken.startsWith(expectedWord))) {
+        status = "close";
+        score = 0.8;
+      } else {
+        let maxSim = 0;
+        for (const act of actualTokens) {
+          const dist = levenshteinDistance(expectedWord, act);
+          const sim = 1 - dist / Math.max(expectedWord.length, act.length, 1);
+          if (sim > maxSim) maxSim = sim;
+        }
+
+        if (maxSim >= (difficulty === 1 ? 0.55 : 0.65)) {
+          status = "close";
+          score = maxSim;
+        } else {
+          status = "missing";
+          score = maxSim;
+        }
+      }
     }
 
-    if (actualTokens.includes(expectedWord)) {
-      return { word: expectedWord, status: "perfect", score: 1 };
-    }
+    const accuracyScore = Math.round(score * 100);
+    const phonemes = evaluatePhonemesForWord(expectedWord, status, score);
 
-    const phoneticMatch = actualTokens.some((act) => isPhoneticallyEquivalent(expectedWord, act));
-    if (phoneticMatch) {
-      return { word: expectedWord, status: "perfect", score: 0.92 };
-    }
-
-    const positionalSpoken = actualTokens[index] ?? actualTokens[0] ?? "";
-    if (positionalSpoken && (expectedWord.startsWith(positionalSpoken) || positionalSpoken.startsWith(expectedWord))) {
-      return { word: expectedWord, status: "close", score: 0.8 };
-    }
-
-    let maxSim = 0;
-    for (const act of actualTokens) {
-      const dist = levenshteinDistance(expectedWord, act);
-      const sim = 1 - dist / Math.max(expectedWord.length, act.length, 1);
-      if (sim > maxSim) maxSim = sim;
-    }
-
-    if (maxSim >= (difficulty === 1 ? 0.55 : 0.65)) {
-      return { word: expectedWord, status: "close", score: maxSim };
-    }
-
-    return { word: expectedWord, status: "missing", score: maxSim };
+    return {
+      word: expectedWord,
+      status,
+      score,
+      accuracyScore,
+      phonemes,
+    };
   });
 };
 

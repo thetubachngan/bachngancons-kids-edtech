@@ -34,11 +34,17 @@ export type PairItem = {
   audioSrc?: string;
 };
 
+export type PhonemeDetail = {
+  ipa: string;
+  audioSrc?: string;
+};
+
 export type FlashcardItem = {
   id: string;
   word: string;
   translation: string;
   phonetic?: string;
+  phonemes?: string[];
   emoji?: string;
   audioSrc?: string;
   example?: string;

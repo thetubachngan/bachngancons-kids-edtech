@@ -810,28 +810,55 @@ export const VoiceRecorderPanel = ({
         )}
       </div>
 
-      {/* Target Word Pills with Color-Coded Feedback (Emerald = Perfect, Amber = Close, Gray = Missing) */}
-      <div className="flex flex-wrap justify-center gap-2 py-1">
+      {/* Target Word Pills with Color-Coded Feedback & IPA Phoneme Badges */}
+      <div className="flex flex-wrap justify-center gap-3 py-1">
         {wordDetails.map((detail, idx) => {
           const isPerfect = detail.status === "perfect";
           const isClose = detail.status === "close";
+          const phonemes = detail.phonemes ?? [];
 
           return (
-            <motion.span
+            <motion.div
               key={`${detail.word}-${idx}`}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: idx * 0.05 }}
-              className={`px-4 py-1.5 rounded-full text-base font-black tracking-wide border-b-4 shadow-sm transition-all ${
+              className={`flex flex-col items-center p-2.5 rounded-2xl border-b-4 shadow-sm transition-all ${
                 isPerfect
                   ? "bg-emerald-500 text-white border-emerald-700 shadow-emerald-200"
                   : isClose
                     ? "bg-amber-400 text-amber-950 border-amber-600 shadow-amber-200"
-                    : "bg-slate-100 text-slate-400 border-slate-300"
+                    : "bg-slate-100 text-slate-500 border-slate-300"
               }`}
             >
-              {detail.word}
-            </motion.span>
+              <span className="text-base font-black tracking-wide">{detail.word}</span>
+
+              {/* Commercial AI IPA Phoneme Badges (Green >= 80%, Yellow 60-79%, Red < 60%) */}
+              {phonemes.length > 0 && (
+                <div className="flex gap-1 mt-1.5 flex-wrap justify-center">
+                  {phonemes.map((ph, pIdx) => {
+                    const isPhPerfect = ph.accuracyScore >= 80 || ph.status === "perfect";
+                    const isPhClose = ph.accuracyScore >= 60 || ph.status === "close";
+
+                    return (
+                      <span
+                        key={pIdx}
+                        className={`px-1.5 py-0.5 rounded-md text-[11px] font-mono font-black border transition-all ${
+                          isPhPerfect
+                            ? "bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs"
+                            : isPhClose
+                              ? "bg-amber-100 text-amber-900 border-amber-300"
+                              : "bg-rose-100 text-rose-700 border-rose-300 animate-pulse"
+                        }`}
+                        title={`Phoneme /${ph.phoneme}/: ${ph.accuracyScore}% accuracy`}
+                      >
+                        /{ph.phoneme}/
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
           );
         })}
       </div>

@@ -90,7 +90,8 @@
 ### III. SƠ ĐỒ DỮ LIỆU & QUẢN LÝ TRẠNG THÁI (DATA SCHEMA & STORE) [UID: IMP-SEC-III]
 
 #### 1. Schema Dữ liệu Học tập (`data/learningSchema.ts`) [UID: IMP-SEC-III-1]
-Mở rộng `QuizType` và `LessonStep` để hỗ trợ đủ cả 7 dạng tương tác (`mcq`, `tap-match`, `drag-drop`, `voice`, `pair-match`, `sentence-builder`, `flashcard-preview`).
+* Mở rộng `QuizType` và `LessonStep` để hỗ trợ đủ 7 dạng tương tác (`mcq`, `tap-match`, `drag-drop`, `voice`, `pair-match`, `sentence-builder`, `flashcard-preview`) và kiểu bài học `storybook`.
+* Bổ sung thuộc tính âm tiết IPA `phonemes: string[]` (vd: `["k", "æt"]`) và chuỗi phiên âm `phonetic: string` để phục vụ chấm điểm phát âm AI chuẩn từng âm tiết.
 
 #### 2. Quản lý Trạng thái Tập trung (`store/learningStore.tsx`) [UID: IMP-SEC-III-2]
 Lưu trữ và đồng bộ tiến trình học tập bền vững qua `localStorage` (`learning-progress-v2`).
@@ -111,7 +112,12 @@ Bảo tồn 100% kịch bản hội thoại gắn ID dạng `scenario-[topic]-[i
 
 1. **100% Static MP3 Audio Engine** [UID: IMP-SEC-V-1]: Sử dụng hoàn toàn tệp âm thanh MP3 thu sẵn trong `data/audioManifest.ts` (`/audio/generated/...`). Tuyệt đối KHÔNG dùng Web Speech API cho từ vựng/ví dụ.
 2. **Zero Initial Consonant Truncation & Zero Latency** [UID: IMP-SEC-V-2]: Không dùng lại duy nhất một instance HTMLAudioElement bị dính `currentTime = 0`. Tự động nạp và pre-decode tệp âm thanh của Bài học vào RAM ngay khi vào màn hình.
-3. **Thu âm & Nhận diện Giọng nói Commercial (`VoiceRecorderPanel.tsx`)** [UID: IMP-SEC-V-3]: Hệ thống thu âm kép `MediaRecorder` + SpeechRecognition với VAD ngắt lời 1.5s, phát lại giọng bé 🎧, âm mẫu chuẩn 🔊 và chấm điểm 3 Sao ⭐⭐⭐.
+3. **Thu âm & Nhận diện Giọng nói AI Chuẩn Âm tiết (`VoiceRecorderPanel.tsx`)** [UID: IMP-SEC-V-3]:
+   * **Mô hình Hybrid Architecture**: Kết hợp thu âm VAD ngắt lời 1.5s + Levenshtein local (0đ chi phí API) cho bài học thường và Cloud Phoneme Recognition AI (Azure Pronunciation Assessment Standard) qua API Route `/api/speech/assess` cho bài Voice Challenge.
+   * **Phân tích 4 chỉ số giọng nói**: *Accuracy Score* (Độ chính xác âm tiết), *Fluency Score* (Độ trôi chảy), *Completeness Score* (Đọc đủ từ), *Prosody/Pitch* (Trọng âm & Ngữ điệu).
+   * **Định dạng dữ liệu `CommercialSpeechResult` (`utils/speechMatch.ts`)**: Trả về điểm từng âm tiết IPA (0-100) và nhận diện loại lỗi (`Omission`, `Insertion`, `Mispronunciation`).
+   * **Giao diện tô màu trực quan âm tiết IPA**: Tô màu trực tiếp từng âm tiết trên giao diện VoiceRecorderPanel: 🟢 **Xanh lá (>=80%)** chuẩn bản xứ, 🟡 **Vàng (60-79%)** tạm ổn, 🔴 **Đỏ (<60%)** sai hoặc nuốt phụ âm đầu/cuối.
+   * **Cơ chế phát lại kép**: Cho phép nghe lại giọng bé 🎧 vs nghe âm mẫu studio chuẩn 🔊.
 4. **Mascot Ong Bee 🐝 Interaction & Gamification** [UID: IMP-SEC-V-4]: Biểu cảm linh hoạt (`happy`, `encouraging`, `celebrating`, `oops`). Popup pháo hoa Confetti và Streak đếm ngày học.
 
 ---
@@ -162,38 +168,39 @@ Bảo tồn 100% kịch bản hội thoại gắn ID dạng `scenario-[topic]-[i
 
 ---
 
-### VIII. KẾ HOẠCH NÂNG CẤP MỞ RỘNG TỪ VỰNG CHUẨN COMMERCIAL (+70 TỪ VỰNG Theo ID) [UID: IMP-SEC-VIII]
+### VIII. KẾ HOẠCH NÂNG CẤP MỞ RỘNG TỪ VỰNG & QUY MÔ GIÁO TRÌNH COMMERCIAL [UID: IMP-SEC-VIII]
 
-Để đạt độ phong phú ngang tầm Lingokids, Monkey Junior và bộ từ vựng chuẩn Cambridge Pre-A1 Starters, chúng ta sẽ mở rộng thêm 5 Chủ đề Từ vựng Mới (+70 từ vựng), được gán ID duy nhất và phân bổ trực tiếp vào 3 Lộ trình Học tập:
+Để đạt quy mô đồ sộ 3.000+ từ vựng & bài học ngang tầm Lingokids, Monkey Junior và bộ từ vựng chuẩn Cambridge, hệ thống được quy hoạch mở rộng theo các cấu phần ID chuẩn hóa:
 
 1. **Chủ đề Phonics Đánh vần Ghép Âm (`explorer-phonics`)** [UID: IMP-SEC-VIII-1]:
-   * **Cấp độ**: Explorer (5-6 tuổi).
-   * **Danh sách từ vựng (16 từ)**:
+   * **Cấp độ**: Explorer (3-6 tuổi) - Level 1 Phonics & First Words (400 từ vựng).
+   * **Danh sách từ vựng tiêu biểu**:
      - Các họ vần `-at`: `cat`, `hat`, `mat`, `rat` (ID: `word-phonics-at-cat`,...)
      - Các họ vần `-an`: `can`, `fan`, `man`, `pan` (ID: `word-phonics-an-can`,...)
      - Các họ vần `-ig` / `-og`: `pig`, `big`, `dog`, `log` (ID: `word-phonics-ig-pig`,...)
      - Các họ vần `-un` / `-up`: `sun`, `run`, `cup`, `pup` (ID: `word-phonics-un-sun`,...)
 
 2. **Chủ đề Trang phục & Phụ kiện (`builder-clothes`)** [UID: IMP-SEC-VIII-2]:
-   * **Cấp độ**: Builder (7-8 tuổi - Lớp 2 Cambridge).
-   * **Danh sách từ vựng (12 từ)**:
-     - `shirt` (Áo sơ mi), `t-shirt` (Áo phông), `dress` (Váy liền), `skirt` (Chân váy), `pants` (Quần dài), `shorts` (Quần đùi), `shoes` (Đôi giày), `socks` (Đôi tất), `jacket` (Áo khoác), `hat` (Cái mũ), `glasses` (Kính mắt), `watch` (Đồng hồ đeo tay).
-     - ID dạng: `word-clothes-shirt`, `word-clothes-dress`,...
+   * **Cấp độ**: Builder (6-7 tuổi) - Level 2 Cambridge Pre-A1 Starters (800 từ vựng + 300 câu giao tiếp).
+   * **Danh sách từ vựng**: `shirt`, `t-shirt`, `dress`, `skirt`, `pants`, `shorts`, `shoes`, `socks`, `jacket`, `hat`, `glasses`, `watch` (ID: `word-clothes-shirt`,...).
 
 3. **Chủ đề Động từ Hành động (`builder-action-verbs`)** [UID: IMP-SEC-VIII-3]:
-   * **Cấp độ**: Builder (7-8 tuổi - Lớp 2 Cambridge).
-   * **Danh sách từ vựng (15 từ)**:
-     - `run` (Chạy), `jump` (Nhảy cao), `swim` (Bơi), `fly` (Bay), `climb` (Leo trèo), `eat` (Ăn), `drink` (Uống), `sleep` (Ngủ), `wash` (Rửa/Gội), `draw` (Vẽ), `sing` (Hát), `dance` (Nhảy múa), `read` (Đọc), `write` (Viết), `clap` (Vỗ tay).
-     - ID dạng: `word-verbs-run`, `word-verbs-jump`,...
+   * **Cấp độ**: Builder (6-7 tuổi) - Level 2 Cambridge Pre-A1 Starters.
+   * **Danh sách từ vựng**: `run`, `jump`, `swim`, `fly`, `climb`, `eat`, `drink`, `sleep`, `wash`, `draw`, `sing`, `dance`, `read`, `write`, `clap` (ID: `word-verbs-run`,...).
 
 4. **Chủ đề Địa điểm & Thiên nhiên (`builder-places-nature`)** [UID: IMP-SEC-VIII-4]:
-   * **Cấp độ**: Builder (7-8 tuổi - Lớp 2 Cambridge).
-   * **Danh sách từ vựng (12 từ)**:
-     - `park` (Công viên), `beach` (Bãi biển), `farm` (Nông trại), `shop` (Cửa hàng), `hospital` (Bệnh viện), `street` (Đường phố), `river` (Dòng sông), `sea` (Biển), `tree` (Cây xanh), `flower` (Bông hoa), `sun` (Mặt trời), `moon` (Mặt trăng).
-     - ID dạng: `word-places-park`, `word-places-beach`,...
+   * **Cấp độ**: Builder (6-7 tuổi) - Level 2 Cambridge Pre-A1 Starters.
+   * **Danh sách từ vựng**: `park`, `beach`, `farm`, `shop`, `hospital`, `street`, `river`, `sea`, `tree`, `flower`, `sun`, `moon` (ID: `word-places-park`,...).
 
 5. **Chủ đề Cảm xúc & Tính từ Miêu tả (`builder-emotions-adjectives`)** [UID: IMP-SEC-VIII-5]:
-   * **Cấp độ**: Builder (7-8 tuổi - Lớp 2 Cambridge).
-   * **Danh sách từ vựng (12 từ)**:
-     - `happy` (Vui vẻ), `sad` (Buồn ã), `angry` (Tức giận), `tired` (Mệt mỏi), `hungry` (Đói bụng), `thirsty` (Khát nước), `big` (To lớn), `small` (Nhỏ bé), `fast` (Nhanh), `slow` (Chậm), `hot` (Nóng), `cold` (Lạnh).
-     - ID dạng: `word-emotions-happy`, `word-emotions-sad`,...
+   * **Cấp độ**: Builder (6-7 tuổi) - Level 2 Cambridge Pre-A1 Starters.
+   * **Danh sách từ vựng**: `happy`, `sad`, `angry`, `tired`, `hungry`, `thirsty`, `big`, `small`, `fast`, `slow`, `hot`, `cold` (ID: `word-emotions-happy`,...).
+
+6. **Định hướng Mở rộng Level 3 Movers & Level 4 Flyers Storybooks (2.000+ Từ vựng nâng cao)**:
+   * **Level 3: Cambridge A1 Movers (8-9 tuổi)**: 1.000 từ vựng + 500 cụm từ phản xạ (Hobbies, Jobs, Transport, Weather, Prepositions).
+   * **Level 4: Cambridge A2 Flyers & Interactive Stories (10+ tuổi)**: 1.000 từ vựng + 50 Truyện đọc tương tác lật trang (Interactive Storybooks).
+
+7. **Pipeline Tự động hóa Dữ liệu Âm thanh Studio Neural TTS & Manifest Generator**:
+   * CLI Script `scripts/generate-audio-manifest.mjs` quét dữ liệu bài học tự động.
+   * Sinh tệp âm thanh tĩnh MP3 128kbps chuẩn HD giọng đọc trẻ em bản xứ vào `/public/audio/vocab/` và cập nhật trực tiếp `data/audioManifest.ts`, đảm bảo 100% tuân thủ nguyên tắc Zero Truncation & Zero Latency theo chuẩn AGENTS.md.
+

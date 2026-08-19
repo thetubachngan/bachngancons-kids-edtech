@@ -721,16 +721,69 @@ export const VoiceRecorderPanel = ({
 
   return (
     <div className="w-full max-w-lg mx-auto space-y-2.5 sm:space-y-3.5 rounded-[1.75rem] sm:rounded-[2.5rem] bg-gradient-to-b from-white via-sky-50/40 to-sky-100/30 p-3.5 sm:p-5 shadow-xl border-2 sm:border-4 border-white/90 backdrop-blur-md max-h-[calc(100dvh-110px)] overflow-y-auto custom-scrollbar">
-      {/* Header text & Expected sentence */}
-      <div className="text-center space-y-1">
+      {/* Header text & Expected sentence with Inline IPA Phonetics Directly Underneath */}
+      <div className="text-center space-y-1.5">
         <div className="inline-flex items-center gap-1 rounded-full bg-amber-100/90 px-2.5 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-700 shadow-2xs">
           <Sparkles className="h-3 w-3" /> Speak & Learn
         </div>
-        <h3 className="text-xl sm:text-3xl font-black tracking-wide text-slate-900 drop-shadow-2xs leading-tight">
-          {expectedText}
-        </h3>
+
+        {/* Cohesive Sentence Display with Phonetics Under Words (No Separate Heavy Boxes) */}
+        <div className="flex flex-wrap justify-center items-end gap-x-3 gap-y-1.5 py-1">
+          {wordDetails.map((detail, idx) => {
+            const isPerfect = detail.status === "perfect";
+            const isClose = detail.status === "close";
+            const isEvaluated = status === "evaluated";
+            const phonemes = detail.phonemes ?? [];
+
+            const wordColor = isEvaluated
+              ? isPerfect
+                ? "text-emerald-600 font-black"
+                : isClose
+                  ? "text-amber-600 font-black"
+                  : "text-rose-600 font-black"
+              : "text-slate-900 font-black";
+
+            return (
+              <div key={`${detail.word}-${idx}`} className="flex flex-col items-center">
+                {/* Word Label */}
+                <span className={`text-lg sm:text-2xl tracking-wide transition-colors ${wordColor}`}>
+                  {detail.word}
+                </span>
+
+                {/* Inline IPA Phonemes Directly Underneath Word */}
+                {phonemes.length > 0 && (
+                  <div className="flex items-center gap-0.5 mt-0.5">
+                    {phonemes.map((ph, pIdx) => {
+                      const isPhPerfect = ph.accuracyScore >= 80 || ph.status === "perfect";
+                      const isPhClose = ph.accuracyScore >= 60 || ph.status === "close";
+
+                      const phClass = isEvaluated
+                        ? isPhPerfect
+                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                          : isPhClose
+                            ? "bg-amber-100 text-amber-900 border-amber-300"
+                            : "bg-rose-100 text-rose-700 border-rose-300 animate-pulse"
+                        : "bg-slate-100 text-slate-600 border-slate-200";
+
+                      return (
+                        <span
+                          key={pIdx}
+                          className={`px-1 py-0.2 rounded text-[10px] sm:text-[11px] font-mono font-bold border transition-all ${phClass}`}
+                          title={`/ ${ph.phoneme} /: ${ph.accuracyScore}% accuracy`}
+                        >
+                          /{ph.phoneme}/
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
         <p className="text-xs sm:text-sm font-bold text-slate-600 leading-snug">
-          {evaluationResult?.feedbackText || hint || "Bé hãy nhấn micro, nghe âm mẫu rồi đọc to từ/câu trên nhé! 🐝"}
+          {evaluationResult?.feedbackText || hint || "Bé hãy nhấn micro, nghe âm mẫu rồi đọc to nhé! 🐝"}
         </p>
       </div>
 
@@ -833,58 +886,7 @@ export const VoiceRecorderPanel = ({
         )}
       </div>
 
-      {/* Target Word Pills with Color-Coded Feedback & IPA Phoneme Badges */}
-      <div className="flex flex-wrap justify-center gap-2 py-0.5">
-        {wordDetails.map((detail, idx) => {
-          const isPerfect = detail.status === "perfect";
-          const isClose = detail.status === "close";
-          const phonemes = detail.phonemes ?? [];
 
-          return (
-            <motion.div
-              key={`${detail.word}-${idx}`}
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: idx * 0.04 }}
-              className={`flex flex-col items-center px-3 py-1.5 rounded-xl sm:rounded-2xl border-b-3 shadow-2xs transition-all ${
-                isPerfect
-                  ? "bg-emerald-500 text-white border-emerald-700 shadow-emerald-200"
-                  : isClose
-                    ? "bg-amber-400 text-amber-950 border-amber-600 shadow-amber-200"
-                    : "bg-slate-100 text-slate-500 border-slate-300"
-              }`}
-            >
-              <span className="text-xs sm:text-sm font-black tracking-wide">{detail.word}</span>
-
-              {/* Commercial AI IPA Phoneme Badges (Green >= 80%, Yellow 60-79%, Red < 60%) */}
-              {phonemes.length > 0 && (
-                <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center">
-                  {phonemes.map((ph, pIdx) => {
-                    const isPhPerfect = ph.accuracyScore >= 80 || ph.status === "perfect";
-                    const isPhClose = ph.accuracyScore >= 60 || ph.status === "close";
-
-                    return (
-                      <span
-                        key={pIdx}
-                        className={`px-1 py-0.2 rounded text-[10px] font-mono font-black border transition-all ${
-                          isPhPerfect
-                            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                            : isPhClose
-                              ? "bg-amber-100 text-amber-900 border-amber-300"
-                              : "bg-rose-100 text-rose-700 border-rose-300 animate-pulse"
-                        }`}
-                        title={`Phoneme /${ph.phoneme}/: ${ph.accuracyScore}% accuracy`}
-                      >
-                        /{ph.phoneme}/
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
 
       {/* Always Visible Skip Button */}
       {onSkip && evaluationResult?.status !== "correct" && (

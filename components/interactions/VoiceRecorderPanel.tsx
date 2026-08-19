@@ -836,6 +836,19 @@ export const VoiceRecorderPanel = ({
         })}
       </div>
 
+      {/* Always Visible Skip Button for Voice Steps */}
+      {onSkip && evaluationResult?.status !== "correct" && (
+        <div className="flex justify-center py-1">
+          <button
+            type="button"
+            onClick={onSkip}
+            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-amber-300 bg-amber-100/90 px-4 py-2 text-xs sm:text-sm font-black text-amber-950 shadow-sm transition hover:bg-amber-200 active:scale-95"
+          >
+            Bỏ qua tạm thời (Thử lại sau) ⏩
+          </button>
+        </div>
+      )}
+
       {/* Evaluation Results Card: Stars + Dual Audio Playback ("Nghe mẫu chuẩn" vs "Nghe lại giọng con") */}
       <AnimatePresence>
         {status === "evaluated" && evaluationResult && (

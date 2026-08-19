@@ -76,6 +76,7 @@ const extractNativeCandidates = (payload: unknown): string[] => {
 export const VoiceRecorderPanel = ({
   expectedText,
   onComplete,
+  onSkip,
   hint,
   level,
   sampleAudioSrc,
@@ -83,6 +84,7 @@ export const VoiceRecorderPanel = ({
 }: {
   expectedText: string;
   onComplete: () => void;
+  onSkip?: () => void;
   hint?: string;
   level?: number;
   sampleAudioSrc?: string;
@@ -900,27 +902,37 @@ export const VoiceRecorderPanel = ({
               )}
             </div>
 
-            {/* Action Buttons: Retry & Continue */}
-            <div className="flex justify-center gap-3 pt-2">
+            {/* Action Buttons: Retry, Skip & Continue */}
+            <div className="flex flex-wrap justify-center gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => {
                   resetSessionVisuals();
                   void toggleListening();
                 }}
-                className="flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white px-5 py-2.5 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                className="flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
               >
                 <RotateCcw className="h-4 w-4" />
                 Thử lại 🔄
               </button>
 
+              {onSkip && evaluationResult.status !== "correct" && (
+                <button
+                  type="button"
+                  onClick={onSkip}
+                  className="flex items-center justify-center gap-2 rounded-2xl border-2 border-amber-300 bg-amber-100 px-4 py-2.5 text-xs sm:text-sm font-black text-amber-900 shadow-sm transition hover:bg-amber-200 active:scale-95"
+                >
+                  Bỏ qua tạm thời ⏩
+                </button>
+              )}
+
               {evaluationResult.status === "correct" && (
                 <button
                   type="button"
                   onClick={onComplete}
-                  className="flex items-center justify-center gap-2 rounded-2xl border-b-4 border-emerald-600 bg-emerald-500 px-6 py-2.5 text-sm font-black text-white shadow-md active:translate-y-[2px] active:border-b-2"
+                  className="flex items-center justify-center gap-2 rounded-2xl border-b-4 border-emerald-600 bg-emerald-500 px-6 py-2.5 text-xs sm:text-sm font-black text-white shadow-md active:translate-y-[2px] active:border-b-2"
                 >
-                  Tiếp tục ⏩
+                  Tiếp tục 🚀
                 </button>
               )}
             </div>

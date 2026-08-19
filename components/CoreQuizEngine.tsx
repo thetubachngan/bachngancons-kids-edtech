@@ -29,16 +29,26 @@ export const CoreQuizEngine = ({
   onProgress?: (progress: number) => void;
 }) => {
   const { speak, stop } = useSpeech();
+  const [stepQueue, setStepQueue] = useState<LessonStep[]>(() => [...lesson.steps]);
   const [stepIndex, setStepIndex] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [feedback, setFeedback] = useState<"idle" | "correct" | "wrong">("idle");
   const [shake, setShake] = useState(false);
   const [isResolvingChoice, setIsResolvingChoice] = useState(false);
+  const [deferredStepIds, setDeferredStepIds] = useState<string[]>([]);
   const wrongTimeoutRef = useRef<number | null>(null);
   const nextTimeoutRef = useRef<number | null>(null);
 
-  const step = lesson.steps[stepIndex];
-  const progress = useMemo(() => (lesson.steps.length ? (stepIndex + 1) / lesson.steps.length : 1), [lesson.steps.length, stepIndex]);
+  // Sync step queue when lesson changes
+  useEffect(() => {
+    setStepQueue([...lesson.steps]);
+    setStepIndex(0);
+    setDeferredStepIds([]);
+  }, [lesson.id, lesson.steps]);
+
+  const step = stepQueue[stepIndex] ?? stepQueue[0];
+  const isDeferredStep = useMemo(() => (step ? deferredStepIds.includes(step.id) : false), [deferredStepIds, step]);
+  const progress = useMemo(() => (stepQueue.length ? (stepIndex + 1) / stepQueue.length : 1), [stepQueue.length, stepIndex]);
 
   const lessonAudioSources = useMemo(
     () =>
@@ -55,7 +65,7 @@ export const CoreQuizEngine = ({
       ? "happy"
       : feedback === "wrong"
         ? "oops"
-        : stepIndex === lesson.steps.length - 1
+        : stepIndex === stepQueue.length - 1
           ? "celebrating"
           : "encouraging";
 
@@ -77,7 +87,7 @@ export const CoreQuizEngine = ({
   }, [lesson.id, step, stop]);
 
   const goNext = () => {
-    if (stepIndex >= lesson.steps.length - 1) {
+    if (stepIndex >= stepQueue.length - 1) {
       onCompleteLesson(lesson.id, lesson.rewardStars);
       return;
     }
@@ -87,6 +97,27 @@ export const CoreQuizEngine = ({
     setShake(false);
     setIsResolvingChoice(false);
     setStepIndex((current) => current + 1);
+  };
+
+  const handleSkipStep = () => {
+    if (!step) return;
+
+    // Track skipped step ID to display encouraging prompt later
+    if (!deferredStepIds.includes(step.id)) {
+      setDeferredStepIds((prev) => [...prev, step.id]);
+    }
+
+    // Move current step to the end of stepQueue
+    const currentStep = stepQueue[stepIndex];
+    const newQueue = [...stepQueue];
+    newQueue.splice(stepIndex, 1);
+    newQueue.push(currentStep);
+
+    setStepQueue(newQueue);
+    setAnswered(false);
+    setFeedback("idle");
+    setShake(false);
+    setIsResolvingChoice(false);
   };
 
   const handleCorrect = async () => {
@@ -256,6 +287,7 @@ export const CoreQuizEngine = ({
         sampleText={currentStep.expectedAudioText ?? currentStep.expectedText}
         sampleAudioSrc={currentStep.expectedAudioSrc}
         onComplete={handleCorrect}
+        onSkip={handleSkipStep}
       />
     );
   };
@@ -263,6 +295,10 @@ export const CoreQuizEngine = ({
   if (!step) {
     return null;
   }
+
+  const promptText = isDeferredStep
+    ? "Tuyệt vời! Bé đã hoàn thành hầu hết bài học. Giờ cùng Bee thử lại câu phát âm lúc nãy nhé! 🐝"
+    : step.prompt;
 
   return (
     <div className="relative flex h-full w-full max-w-lg mx-auto flex-col justify-between p-4 overflow-hidden select-none">
@@ -278,7 +314,7 @@ export const CoreQuizEngine = ({
           <div className="relative flex-1 rounded-2xl border-2 border-amber-200 bg-white p-3.5 shadow-md">
             <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 h-0 w-0 border-y-8 border-r-8 border-y-transparent border-r-white" />
             <div className="flex items-center justify-between gap-2">
-              <p className="text-base sm:text-lg font-black text-slate-800 leading-snug">{step.prompt}</p>
+              <p className="text-sm sm:text-base font-black text-slate-800 leading-snug">{promptText}</p>
               <button
                 type="button"
                 onClick={playQuestionAudio}

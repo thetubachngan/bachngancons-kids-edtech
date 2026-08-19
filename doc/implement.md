@@ -28,7 +28,9 @@
 | ├── `[UID: IMP-SEC-V-2]` | ├── 2. Zero-Latency Response & Lesson Pre-decoding | Tiểu mục |
 | ├── `[UID: IMP-SEC-V-3]` | ├── 3. Thu âm & Nhận diện Giọng nói Commercial (`VoiceRecorderPanel.tsx`) | Tiểu mục |
 | ├── `[UID: IMP-SEC-V-4]` | ├── 4. Hệ thống Thưởng & Linh vật Ong Bee (`components/gamification/`) | Tiểu mục |
-| └── `[UID: IMP-SEC-V-5]` | └── 5. Cơ chế Bỏ qua Tạm thời & Hàng đợi Nhắc lại (`Smart Re-Queue Engine`) | Tiểu mục |
+| ├── `[UID: IMP-SEC-V-5]` | ├── 5. Cơ chế Bỏ qua Tạm thời & Hàng đợi Nhắc lại (`Smart Re-Queue Engine`) | Tiểu mục |
+| ├── `[UID: IMP-SEC-V-6]` | ├── 6. Cửa hàng Trang phục Mascot Ong Bee (`MascotStoreModal.tsx`) | Tiểu mục |
+| └── `[UID: IMP-SEC-V-7]` | └── 7. Popup Mở mừng Chuỗi Ngày Học & Thưởng Đăng Nhập (`DailyStreakModal.tsx`) | Tiểu mục |
 | `[UID: IMP-SEC-VI]` | **VI. Kế hoạch Nâng cấp Giáo trình Lớp 2 (Cambridge Pre-A1 Starters)** | Mục lớn |
 | ├── `[UID: IMP-SEC-VI-1]` | ├── 1. Đánh giá Chuyên môn & Tăng độ khó theo cấp độ Lớp 2 | Tiểu mục |
 | ├── `[UID: IMP-SEC-VI-2]` | ├── 2. Bổ sung Bộ Cấu trúc Câu Giao tiếp & Phonics Đánh vần | Tiểu mục |

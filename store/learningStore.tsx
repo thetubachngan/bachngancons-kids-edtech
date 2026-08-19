@@ -22,6 +22,8 @@ type LearningState = {
   stars: number;
   lastVisitDate: string | null;
   lessonStats: Record<string, LessonStat>;
+  unlockedAccessories: string[];
+  equippedAccessoryId: string | null;
 };
 
 type Action =
@@ -33,7 +35,9 @@ type Action =
   | { type: "COMPLETE_LESSON"; lessonId: string; starsEarned: number; nextLessonId?: string | null }
   | { type: "UNLOCK_LESSON"; lessonId: string }
   | { type: "UPDATE_STREAK"; streakDays: number; lastVisitDate: string }
-  | { type: "ADD_REWARD"; amount: number };
+  | { type: "ADD_REWARD"; amount: number }
+  | { type: "BUY_ACCESSORY"; accessoryId: string; cost: number }
+  | { type: "EQUIP_ACCESSORY"; accessoryId: string | null };
 
 const STORAGE_KEY = "learning-progress-v2";
 const LEGACY_KEY = "kids-english-progress";
@@ -61,6 +65,8 @@ const initialState: LearningState = {
   stars: 0,
   lastVisitDate: null,
   lessonStats: {},
+  unlockedAccessories: [],
+  equippedAccessoryId: null,
 };
 
 function reducer(state: LearningState, action: Action): LearningState {
@@ -115,6 +121,19 @@ function reducer(state: LearningState, action: Action): LearningState {
       return { ...state, streakDays: action.streakDays, lastVisitDate: action.lastVisitDate };
     case "ADD_REWARD":
       return { ...state, rewards: state.rewards + action.amount, stars: state.stars + action.amount };
+    case "BUY_ACCESSORY": {
+      if (state.stars < action.cost || state.unlockedAccessories.includes(action.accessoryId)) {
+        return state;
+      }
+      return {
+        ...state,
+        stars: state.stars - action.cost,
+        unlockedAccessories: [...state.unlockedAccessories, action.accessoryId],
+        equippedAccessoryId: action.accessoryId,
+      };
+    }
+    case "EQUIP_ACCESSORY":
+      return { ...state, equippedAccessoryId: action.accessoryId };
     default:
       return state;
   }

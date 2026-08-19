@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Sparkles, Star, Trophy } from "lucide-react";
+import { Sparkles, Star, Trophy, ShoppingBag } from "lucide-react";
 
 import { LearningMap } from "@/components/LearningMap";
 import { CoreQuizEngine } from "@/components/CoreQuizEngine";
@@ -9,6 +9,8 @@ import { FocusLessonShell } from "@/components/lesson/FocusLessonShell";
 import { Mascot } from "@/components/gamification/Mascot";
 import { RewardOverlay } from "@/components/gamification/RewardOverlay";
 import { StreakBanner } from "@/components/gamification/StreakBanner";
+import { MascotStoreModal } from "@/components/gamification/MascotStoreModal";
+import { DailyStreakModal } from "@/components/gamification/DailyStreakModal";
 import { curriculum, getLessonById, getNextLessonId } from "@/data/curriculum";
 import { LearningStoreProvider, type LevelTab, totalLessonCount, useLearningStore } from "@/store/learningStore";
 import { preloadAudio } from "@/utils/preloadAudio";
@@ -21,6 +23,18 @@ function AppShell() {
   const [rewardStars, setRewardStars] = useState(0);
   const [pendingNextLessonId, setPendingNextLessonId] = useState<string | null>(null);
   const [isPreparingLesson, setIsPreparingLesson] = useState(false);
+  const [storeOpen, setStoreOpen] = useState(false);
+  const [streakModalOpen, setStreakModalOpen] = useState(false);
+
+  // Check daily streak celebration once per day session
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const hasCelebratedKey = `streak-celebrated-${today}`;
+    if (typeof window !== "undefined" && !window.sessionStorage.getItem(hasCelebratedKey)) {
+      window.sessionStorage.setItem(hasCelebratedKey, "true");
+      setStreakModalOpen(true);
+    }
+  }, []);
 
   const activeLesson = useMemo(() => (activeLessonId ? getLessonById(activeLessonId) : null), [activeLessonId]);
 
@@ -138,6 +152,14 @@ function AppShell() {
                 </p>
 
                 <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStoreOpen(true)}
+                    className="stat-chip bg-amber-300 text-amber-950 px-3 py-1.5 text-xs sm:text-sm font-black border-b-2 border-amber-500 shadow-md active:translate-y-[1px]"
+                  >
+                    <ShoppingBag className="h-4 w-4" />
+                    Tủ Đồ Bee 🐝
+                  </button>
                   <div className="stat-chip bg-yellow-200 text-yellow-950 px-3 py-1.5 text-xs sm:text-sm">
                     <Star className="h-4 w-4" />
                     {state.stars} sao
@@ -159,8 +181,15 @@ function AppShell() {
                 </div>
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-3">
                 <Mascot mood={state.currentLessonId ? "encouraging" : "happy"} />
+                <button
+                  type="button"
+                  onClick={() => setStoreOpen(true)}
+                  className="rounded-full bg-amber-400 text-amber-950 px-4 py-1.5 text-xs font-black shadow-md border-b-2 border-amber-600 active:translate-y-[1px]"
+                >
+                  ✨ Đổi Đồ Cho Bee 👑
+                </button>
               </div>
             </div>
           </section>
@@ -188,6 +217,8 @@ function AppShell() {
       )}
 
       <RewardOverlay open={rewardOpen} stars={rewardStars} streak={state.streakDays} onClose={handleContinueFromReward} onContinue={handleContinueFromReward} />
+      <MascotStoreModal open={storeOpen} onClose={() => setStoreOpen(false)} />
+      <DailyStreakModal open={streakModalOpen} streakDays={state.streakDays} onClose={() => setStreakModalOpen(false)} />
     </div>
   );
 }

@@ -801,6 +801,25 @@ export const VoiceRecorderPanel = ({
             );
           })}
         </div>
+
+        {/* Dual-Speed Sample Audio Control Buttons (Nghe Mẫu 1.0x & Nghe Chậm Con Rùa 0.80x) */}
+        <div className="flex items-center justify-center gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => replaySample(1.0)}
+            className="flex items-center justify-center gap-1.5 rounded-xl border-b-3 border-sky-600 bg-sky-400 px-3 py-1.5 text-xs font-black text-sky-950 shadow-xs active:translate-y-[1px] active:border-b-1 transition hover:bg-sky-300"
+          >
+            <Volume2 className="h-3.5 w-3.5" />
+            🔊 Nghe mẫu
+          </button>
+          <button
+            type="button"
+            onClick={() => replaySample(0.8)}
+            className="flex items-center justify-center gap-1.5 rounded-xl border-b-3 border-amber-600 bg-amber-400 px-3 py-1.5 text-xs font-black text-amber-950 shadow-xs active:translate-y-[1px] active:border-b-1 transition hover:bg-amber-300"
+          >
+            🐢 Nghe chậm
+          </button>
+        </div>
       </div>
 
       {/* Real-Time Transcript Bar */}

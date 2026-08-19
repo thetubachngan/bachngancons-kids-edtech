@@ -25,7 +25,7 @@ export const FlashcardPreview = ({
       text: currentItem.word,
       audioSrc: currentItem.audioSrc,
       kind: "word",
-      rate: 0.4,
+      rate: 1.0,
       source: "lesson",
       mode: "manual",
       interrupt: "all",

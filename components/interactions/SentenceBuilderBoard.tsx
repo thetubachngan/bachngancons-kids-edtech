@@ -40,7 +40,7 @@ export const SentenceBuilderBoard = ({
       text: sentence,
       audioSrc: questionAudioSrc,
       kind: "sentence",
-      rate: 0.45,
+      rate: 1.0,
       source: "lesson",
       mode: "manual",
       interrupt: "all",

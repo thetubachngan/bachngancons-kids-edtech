@@ -69,7 +69,7 @@ export const PairMatchBoard = ({
         text: card.text,
         audioSrc: card.audioSrc,
         kind: "word",
-        rate: 0.4,
+        rate: 1.0,
         source: "lesson",
         mode: "manual",
         interrupt: "all",

@@ -40,38 +40,43 @@ export const LearningMap = ({
   const { state, dispatch } = useLearningStore();
   const lastFocusedLessonRef = useRef<string | null>(null);
 
-  const activeTargetId = useMemo(
-    () => focusLessonId ?? state.currentLessonId ?? (unlockedLessonIds.length ? unlockedLessonIds[unlockedLessonIds.length - 1] : null),
-    [focusLessonId, state.currentLessonId, unlockedLessonIds],
+  // When focusLessonId is passed (e.g. continuing to next lesson), auto-switch tab to that lesson's level
+  const focusedLesson = useMemo(
+    () => (focusLessonId ? curriculum.units.flatMap((unit) => unit.lessons).find((lesson) => lesson.id === focusLessonId) ?? null : null),
+    [curriculum.units, focusLessonId],
   );
 
-  const targetLesson = useMemo(
-    () => (activeTargetId ? curriculum.units.flatMap((unit) => unit.lessons).find((lesson) => lesson.id === activeTargetId) ?? null : null),
-    [curriculum.units, activeTargetId],
-  );
-
-  const targetLevelTab = targetLesson
-    ? ((Object.entries(levelMap).find(([, level]) => level === targetLesson.level)?.[0] ?? "explorer") as LevelTab)
+  const focusedLevelTab = focusedLesson
+    ? ((Object.entries(levelMap).find(([, level]) => level === focusedLesson.level)?.[0] ?? "explorer") as LevelTab)
     : null;
 
-  const activeLevelTab = targetLevelTab ?? state.activeLevelTab;
+  // Prioritize focusedLevelTab when explicit focusLessonId exists, otherwise use state.activeLevelTab so user tab clicks work 100%
+  const activeLevelTab = focusedLevelTab ?? state.activeLevelTab;
   const filteredUnits = useMemo(() => curriculum.units.filter((unit) => unit.level === levelMap[activeLevelTab]), [activeLevelTab, curriculum.units]);
 
-  // Auto-scroll smoothly to active/next lesson node on return to map
+  // Target node to scroll into view: focusLessonId or current active lesson in this level tab
+  const scrollTargetId = useMemo(() => {
+    if (focusLessonId) return focusLessonId;
+    const currentInTab = filteredUnits.flatMap((u) => u.lessons).find((l) => l.id === state.currentLessonId);
+    if (currentInTab) return currentInTab.id;
+    return null;
+  }, [filteredUnits, focusLessonId, state.currentLessonId]);
+
+  // Auto-scroll smoothly to target lesson node on map load/return
   useEffect(() => {
-    if (!activeTargetId) return;
+    if (!scrollTargetId || scrollTargetId === lastFocusedLessonRef.current) return;
 
     const timer = window.setTimeout(() => {
-      const lessonNode = document.getElementById(`lesson-node-${activeTargetId}`);
+      const lessonNode = document.getElementById(`lesson-node-${scrollTargetId}`);
       if (!lessonNode) return;
 
+      lastFocusedLessonRef.current = scrollTargetId;
       lessonNode.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
-      lastFocusedLessonRef.current = activeTargetId;
       if (focusLessonId) onFocusConsumed?.();
     }, 200);
 
     return () => window.clearTimeout(timer);
-  }, [activeTargetId, focusLessonId, onFocusConsumed]);
+  }, [focusLessonId, onFocusConsumed, scrollTargetId]);
 
   return (
     <div className="mx-auto w-full max-w-xl select-none px-3 pb-[calc(6rem+var(--safe-bottom))] sm:px-4">

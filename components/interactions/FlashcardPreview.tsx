@@ -41,6 +41,12 @@ export const FlashcardPreview = ({
     }
   };
 
+  const toggleFlip = () => {
+    const nextFlipped = !isFlipped;
+    setIsFlipped(nextFlipped);
+    playAudio();
+  };
+
   if (!currentItem) return null;
 
   return (
@@ -56,7 +62,7 @@ export const FlashcardPreview = ({
       <div className="perspective-1000 flex justify-center py-1 sm:py-2">
         <motion.div
           key={currentItem.id}
-          onClick={() => setIsFlipped((prev) => !prev)}
+          onClick={toggleFlip}
           className="relative h-52 sm:h-64 w-full max-w-sm cursor-pointer rounded-3xl transition-transform duration-500 transform-style-preserve-3d shadow-2xl"
           animate={{ rotateY: isFlipped ? 180 : 0 }}
           transition={{ duration: 0.6, ease: "easeInOut" }}

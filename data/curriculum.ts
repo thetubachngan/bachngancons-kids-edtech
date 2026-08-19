@@ -40,6 +40,17 @@ const buildExplorerWordLesson = (unitId: string, topicTitle: string, chunkIndex:
 
   const steps: LessonStep[] = [
     {
+      id: `${primary.id}-preview`,
+      type: "flashcard-preview",
+      prompt: "Khám phá từ mới 3D cùng Ong Bee 🐝",
+      skill: "reading",
+      visual: {
+        title: topicTitle,
+        subtitle: "Chạm lật thẻ 3D để xem hình & nghe đọc chuẩn nhé!",
+      },
+      items: buildFlashcardItems(chunk),
+    },
+    {
       id: `${primary.id}-tap`,
       type: "tap-match",
       prompt: "Nghe từ và chạm vào hình đúng nhé!",
@@ -232,6 +243,17 @@ const buildChallengerWordLesson = (unitId: string, topicTitle: string, chunkInde
   const dragAnswer = sanitizeWord(primary.word);
 
   const steps: LessonStep[] = [
+    {
+      id: `${primary.id}-preview`,
+      type: "flashcard-preview",
+      prompt: "Khám phá nhóm từ 3D Challenger 🐝",
+      skill: "reading",
+      visual: {
+        title: topicTitle,
+        subtitle: "Lật thẻ 3D nâng cao xem nghĩa & nghe phát âm mẫu",
+      },
+      items: buildFlashcardItems(chunk),
+    },
     {
       id: `${primary.id}-tap`,
       type: "tap-match",

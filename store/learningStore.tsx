@@ -37,7 +37,8 @@ type Action =
   | { type: "UPDATE_STREAK"; streakDays: number; lastVisitDate: string }
   | { type: "ADD_REWARD"; amount: number }
   | { type: "BUY_ACCESSORY"; accessoryId: string; cost: number }
-  | { type: "EQUIP_ACCESSORY"; accessoryId: string | null };
+  | { type: "EQUIP_ACCESSORY"; accessoryId: string | null }
+  | { type: "RESET_PROGRESS" };
 
 const STORAGE_KEY = "learning-progress-v2";
 const LEGACY_KEY = "kids-english-progress";
@@ -134,6 +135,8 @@ function reducer(state: LearningState, action: Action): LearningState {
     }
     case "EQUIP_ACCESSORY":
       return { ...state, equippedAccessoryId: action.accessoryId };
+    case "RESET_PROGRESS":
+      return { ...initialState };
     default:
       return state;
   }

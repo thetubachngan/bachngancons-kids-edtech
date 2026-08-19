@@ -11,6 +11,8 @@ import { RewardOverlay } from "@/components/gamification/RewardOverlay";
 import { StreakBanner } from "@/components/gamification/StreakBanner";
 import { MascotStoreModal } from "@/components/gamification/MascotStoreModal";
 import { DailyStreakModal } from "@/components/gamification/DailyStreakModal";
+import { ParentalGateModal } from "@/components/gamification/ParentalGateModal";
+import { ParentDashboardModal } from "@/components/gamification/ParentDashboardModal";
 import { curriculum, getLessonById, getNextLessonId } from "@/data/curriculum";
 import { LearningStoreProvider, type LevelTab, totalLessonCount, useLearningStore } from "@/store/learningStore";
 import { preloadAudio } from "@/utils/preloadAudio";
@@ -25,6 +27,8 @@ function AppShell() {
   const [isPreparingLesson, setIsPreparingLesson] = useState(false);
   const [storeOpen, setStoreOpen] = useState(false);
   const [streakModalOpen, setStreakModalOpen] = useState(false);
+  const [parentGateOpen, setParentGateOpen] = useState(false);
+  const [parentDashboardOpen, setParentDashboardOpen] = useState(false);
 
   // Check daily streak celebration once per day session
   useEffect(() => {
@@ -154,6 +158,13 @@ function AppShell() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
+                    onClick={() => setParentGateOpen(true)}
+                    className="stat-chip bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 px-3.5 py-1.5 text-xs sm:text-sm font-black border-b-2 border-amber-600 shadow-md active:translate-y-[1px]"
+                  >
+                    👨‍👩‍👧 Góc Phụ Huynh 📊
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setStoreOpen(true)}
                     className="stat-chip bg-amber-300 text-amber-950 px-3 py-1.5 text-xs sm:text-sm font-black border-b-2 border-amber-500 shadow-md active:translate-y-[1px]"
                   >
@@ -169,10 +180,14 @@ function AppShell() {
                       Đang tải bài học...
                     </div>
                   ) : null}
-                  <div className="stat-chip bg-emerald-200 text-emerald-950 px-3 py-1.5 text-xs sm:text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setParentGateOpen(true)}
+                    className="stat-chip bg-emerald-200 text-emerald-950 px-3 py-1.5 text-xs sm:text-sm hover:bg-emerald-300 transition"
+                  >
                     <Trophy className="h-4 w-4" />
                     {completedLessonCount}/{totalLessonCount} lessons
-                  </div>
+                  </button>
                   <div className="stat-chip bg-sky-200 text-sky-950 px-3 py-1.5 text-xs sm:text-sm">
                     <Star className="h-4 w-4" />
                     {unlockedLessonCount} unlocked
@@ -219,6 +234,28 @@ function AppShell() {
       <RewardOverlay open={rewardOpen} stars={rewardStars} streak={state.streakDays} onClose={handleContinueFromReward} onContinue={handleContinueFromReward} />
       <MascotStoreModal open={storeOpen} onClose={() => setStoreOpen(false)} />
       <DailyStreakModal open={streakModalOpen} streakDays={state.streakDays} onClose={() => setStreakModalOpen(false)} />
+
+      {/* Parent Control Modals */}
+      <ParentalGateModal
+        open={parentGateOpen}
+        onClose={() => setParentGateOpen(false)}
+        onSuccess={() => {
+          setParentGateOpen(false);
+          setParentDashboardOpen(true);
+        }}
+      />
+      <ParentDashboardModal
+        open={parentDashboardOpen}
+        onClose={() => setParentDashboardOpen(false)}
+        completedLessonIds={state.completedLessonIds}
+        unlockedLessonIds={state.unlockedLessonIds}
+        currentLessonId={state.currentLessonId}
+        stars={state.stars}
+        streakDays={state.streakDays}
+        lessonStats={state.lessonStats}
+        onStartLesson={startLesson}
+        onResetProgress={() => dispatch({ type: "RESET_PROGRESS" })}
+      />
     </div>
   );
 }

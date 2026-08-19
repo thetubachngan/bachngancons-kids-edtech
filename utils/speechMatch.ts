@@ -1,10 +1,21 @@
 export type SpeechMatchStatus = "correct" | "almost-correct" | "wrong";
 
+export type WordMatchStatus = "perfect" | "close" | "missing";
+
+export type WordDetail = {
+  word: string;
+  status: WordMatchStatus;
+  score: number;
+};
+
 export type SpeechMatchResult = {
   status: SpeechMatchStatus;
   score: number;
+  stars: 1 | 2 | 3;
   expected: string;
   actual: string;
+  feedbackText: string;
+  wordDetails: WordDetail[];
 };
 
 export type SpeechDifficulty = 1 | 2 | 3;
@@ -24,15 +35,15 @@ const NUMBER_MAP: Record<string, string> = {
 };
 
 const PHONETIC_EQUIVALENTS: Record<string, string[]> = {
-  cat: ["kat", "cut", "katt", "cap", "can", "cot", "ket"],
-  dog: ["dok", "dock", "duck", "dark", "daug", "doggy", "doggie"],
-  apple: ["aple", "able", "apo", "epple", "appol"],
-  red: ["rad", "rat", "read", "led", "rhed"],
+  cat: ["kat", "cut", "katt", "cap", "can", "cot", "ket", "cæt"],
+  dog: ["dok", "dock", "duck", "dark", "daug", "doggy", "doggie", "dôg"],
+  apple: ["aple", "able", "apo", "epple", "appol", "ap-pou", "ep-pole"],
+  red: ["rad", "rat", "read", "led", "rhed", "ret"],
   blue: ["blu", "bloo", "blow", "blew"],
   green: ["grin", "grene", "grean"],
   yellow: ["yelo", "yello", "yellowish"],
   pink: ["pin", "ping", "pinc"],
-  three: ["tree", "free", "tri", "thri"],
+  three: ["tree", "free", "tri", "thri", "trii"],
   four: ["for", "fore", "foor"],
   five: ["fiv", "faiv", "fife"],
   six: ["siks", "sic", "sics"],
@@ -43,7 +54,7 @@ const PHONETIC_EQUIVALENTS: Record<string, string[]> = {
   one: ["won", "wan"],
   two: ["to", "too"],
   ball: ["bol", "bawl", "bo", "bal"],
-  fish: ["feesh", "fishy", "fich"],
+  fish: ["feesh", "fishy", "fich", "pish"],
   duck: ["dak", "duk", "doc", "ducc"],
   car: ["kar", "ca", "carr"],
   bus: ["bas", "buss", "bos"],
@@ -62,6 +73,17 @@ const PHONETIC_EQUIVALENTS: Record<string, string[]> = {
   monkey: ["munkey", "monki"],
   lion: ["liun", "liom"],
   bear: ["bare", "bair"],
+  banana: ["bu-na-na", "banan", "bana", "bunana"],
+  elephant: ["elifant", "aliphant", "elefant"],
+  frog: ["frok", "froc", "frawg"],
+  rabbit: ["rabit", "rabite", "rabit"],
+  tiger: ["taiger", "tiga", "tige"],
+  zebra: ["zibra", "sebra"],
+  water: ["wata", "wate", "woter"],
+  orange: ["orenge", "orinj"],
+  purple: ["perpul", "perple"],
+  white: ["wait", "wite"],
+  black: ["blek", "blak"],
 };
 
 export const normalizeSpeechText = (text: string) => {
@@ -123,10 +145,10 @@ const isPhoneticallyEquivalent = (left: string, right: string) => {
 const getThresholds = (difficulty: SpeechDifficulty, tokenCount: number) => {
   const base =
     difficulty === 1
-      ? { correct: 0.58, almost: 0.42 }
+      ? { correct: 0.55, almost: 0.40 }
       : difficulty === 2
-        ? { correct: 0.68, almost: 0.52 }
-        : { correct: 0.78, almost: 0.62 };
+        ? { correct: 0.65, almost: 0.48 }
+        : { correct: 0.75, almost: 0.58 };
 
   const tokenAdjustment = tokenCount <= 1 ? 0.0 : tokenCount >= 4 ? -0.04 : 0;
 
@@ -136,6 +158,52 @@ const getThresholds = (difficulty: SpeechDifficulty, tokenCount: number) => {
   };
 };
 
+export const evaluateWordDetails = (
+  expectedText: string,
+  actualText: string,
+  difficulty: SpeechDifficulty = 2,
+): WordDetail[] => {
+  const expectedTokens = tokenize(expectedText);
+  const actualTokens = tokenize(actualText);
+
+  if (!expectedTokens.length) {
+    return [];
+  }
+
+  return expectedTokens.map((expectedWord, index) => {
+    if (!actualTokens.length) {
+      return { word: expectedWord, status: "missing", score: 0 };
+    }
+
+    if (actualTokens.includes(expectedWord)) {
+      return { word: expectedWord, status: "perfect", score: 1 };
+    }
+
+    const phoneticMatch = actualTokens.some((act) => isPhoneticallyEquivalent(expectedWord, act));
+    if (phoneticMatch) {
+      return { word: expectedWord, status: "perfect", score: 0.92 };
+    }
+
+    const positionalSpoken = actualTokens[index] ?? actualTokens[0] ?? "";
+    if (positionalSpoken && (expectedWord.startsWith(positionalSpoken) || positionalSpoken.startsWith(expectedWord))) {
+      return { word: expectedWord, status: "close", score: 0.8 };
+    }
+
+    let maxSim = 0;
+    for (const act of actualTokens) {
+      const dist = levenshteinDistance(expectedWord, act);
+      const sim = 1 - dist / Math.max(expectedWord.length, act.length, 1);
+      if (sim > maxSim) maxSim = sim;
+    }
+
+    if (maxSim >= (difficulty === 1 ? 0.55 : 0.65)) {
+      return { word: expectedWord, status: "close", score: maxSim };
+    }
+
+    return { word: expectedWord, status: "missing", score: maxSim };
+  });
+};
+
 export const evaluateSpeechMatch = (
   expectedText: string,
   actualText: string,
@@ -143,44 +211,73 @@ export const evaluateSpeechMatch = (
 ): SpeechMatchResult => {
   const expected = normalizeSpeechText(expectedText);
   const actual = normalizeSpeechText(actualText);
+  const wordDetails = evaluateWordDetails(expectedText, actualText, difficulty);
 
   if (!expected || !actual) {
-    return { status: "wrong", score: 0, expected, actual };
+    return {
+      status: "wrong",
+      score: 0,
+      stars: 1,
+      expected,
+      actual,
+      feedbackText: "Con hãy bấm nút micro và phát âm to rõ nhé! 🐝",
+      wordDetails: tokenize(expectedText).map((w) => ({ word: w, status: "missing", score: 0 })),
+    };
   }
 
   if (expected === actual) {
-    return { status: "correct", score: 1, expected, actual };
+    return {
+      status: "correct",
+      score: 1,
+      stars: 3,
+      expected,
+      actual,
+      feedbackText: "Xuất sắc! Bé phát âm chuẩn 100%! 🌟🌟🌟",
+      wordDetails: wordDetails.map((d) => ({ ...d, status: "perfect", score: 1 })),
+    };
   }
 
   const expectedTokens = tokenize(expected);
   const actualTokens = tokenize(actual);
 
-  // Exact word contained inside spoken sentence (e.g. kid says "it is a cat" for "cat")
+  // Single word inclusion check
   if (expectedTokens.length === 1 && expectedTokens[0] && actualTokens.includes(expectedTokens[0])) {
-    return { status: "correct", score: 0.96, expected, actual };
+    return {
+      status: "correct",
+      score: 0.96,
+      stars: 3,
+      expected,
+      actual,
+      feedbackText: "Tuyệt vời! Bé đọc chính xác từ này rồi! ⭐⭐⭐",
+      wordDetails,
+    };
   }
 
   // Exact phrase inclusion
   if (actual.includes(expected) && expected.length > 2) {
-    return { status: "correct", score: 0.95, expected, actual };
+    return {
+      status: "correct",
+      score: 0.95,
+      stars: 3,
+      expected,
+      actual,
+      feedbackText: "Giỏi quá! Bé đọc đầy đủ và chuẩn xác! ⭐⭐⭐",
+      wordDetails,
+    };
   }
 
   const charDist = levenshteinDistance(expected, actual);
   const maxLen = Math.max(expected.length, actual.length, 1);
   let charScore = 1 - charDist / maxLen;
 
-  // Single short word forgiveness (e.g., len <= 4 with 1 char distance like "cat" vs "kat")
   if (expectedTokens.length === 1 && expected.length <= 4 && charDist <= 1) {
     charScore = Math.max(charScore, 0.85);
   }
 
-  const maxTokens = Math.max(expectedTokens.length, actualTokens.length, 1);
   let matched = 0;
-
   for (let index = 0; index < expectedTokens.length; index += 1) {
     const left = expectedTokens[index] ?? "";
 
-    // Check direct or phonetic match anywhere in actualTokens
     const exactIndex = actualTokens.indexOf(left);
     if (exactIndex !== -1) {
       matched += 1;
@@ -193,14 +290,12 @@ export const evaluateSpeechMatch = (
       continue;
     }
 
-    // Check positional ratio / prefix match
     const positionalRight = actualTokens[index] ?? "";
     if (positionalRight && (left.startsWith(positionalRight) || positionalRight.startsWith(left))) {
       matched += 0.8;
       continue;
     }
 
-    // Levenshtein on token pair
     let bestTokenScore = 0;
     for (const right of actualTokens) {
       const dist = levenshteinDistance(left, right);
@@ -211,24 +306,38 @@ export const evaluateSpeechMatch = (
       }
     }
 
-    if (bestTokenScore >= 0.6) {
+    if (bestTokenScore >= 0.55) {
       matched += bestTokenScore * 0.85;
     }
   }
 
-  const tokenScore = matched / expectedTokens.length;
-  const combinedScore = clamp(charScore * 0.45 + tokenScore * 0.55, 0, 1);
+  const tokenScore = matched / (expectedTokens.length || 1);
+  const combinedScore = clamp(charScore * 0.4 + tokenScore * 0.6, 0, 1);
   const { correct, almost } = getThresholds(difficulty, expectedTokens.length || 1);
 
+  let status: SpeechMatchStatus = "wrong";
+  let stars: 1 | 2 | 3 = 1;
+  let feedbackText = "Bé nói chưa rõ lắm, thử nhấn nghe mẫu và đọc lại nhé! 🐝";
+
   if (combinedScore >= correct) {
-    return { status: "correct", score: combinedScore, expected, actual };
+    status = "correct";
+    stars = combinedScore >= 0.85 ? 3 : 2;
+    feedbackText = stars === 3 ? "Xuất sắc! Bé phát âm rất chuẩn! 🌟🌟🌟" : "Rất tốt! Bé phát âm gần như chuẩn tuyệt đối! ⭐⭐";
+  } else if (combinedScore >= almost) {
+    status = "almost-correct";
+    stars = 2;
+    feedbackText = "Bé nói gần đúng rồi! Nghe lại mẫu và thử phát âm rõ hơn nhé! ⭐⭐";
   }
 
-  if (combinedScore >= almost) {
-    return { status: "almost-correct", score: combinedScore, expected, actual };
-  }
-
-  return { status: "wrong", score: combinedScore, expected, actual };
+  return {
+    status,
+    score: combinedScore,
+    stars,
+    expected,
+    actual,
+    feedbackText,
+    wordDetails,
+  };
 };
 
 export const evaluateMultiCandidateMatch = (
@@ -238,15 +347,32 @@ export const evaluateMultiCandidateMatch = (
 ): SpeechMatchResult => {
   const validCandidates = candidates.filter((c) => c && typeof c === "string" && c.trim().length > 0);
   if (!validCandidates.length) {
-    return { status: "wrong", score: 0, expected: normalizeSpeechText(expectedText), actual: "" };
+    const expected = normalizeSpeechText(expectedText);
+    return {
+      status: "wrong",
+      score: 0,
+      stars: 1,
+      expected,
+      actual: "",
+      feedbackText: "Bé chưa phát âm, hãy bấm nút micro để bắt đầu nhé! 🐝",
+      wordDetails: tokenize(expectedText).map((w) => ({ word: w, status: "missing", score: 0 })),
+    };
   }
 
-  let bestResult: SpeechMatchResult = { status: "wrong", score: -1, expected: normalizeSpeechText(expectedText), actual: validCandidates[0] ?? "" };
+  let bestResult: SpeechMatchResult = {
+    status: "wrong",
+    score: -1,
+    stars: 1,
+    expected: normalizeSpeechText(expectedText),
+    actual: validCandidates[0] ?? "",
+    feedbackText: "",
+    wordDetails: [],
+  };
 
   for (const candidate of validCandidates) {
     const result = evaluateSpeechMatch(expectedText, candidate, difficulty);
-    if (result.status === "correct") {
-      return result; // Early exit on correct match
+    if (result.status === "correct" && result.stars === 3) {
+      return result;
     }
     if (result.score > bestResult.score) {
       bestResult = result;
@@ -255,3 +381,4 @@ export const evaluateMultiCandidateMatch = (
 
   return bestResult;
 };
+

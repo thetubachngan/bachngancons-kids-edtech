@@ -291,25 +291,27 @@ export const CoreQuizEngine = ({
           </div>
         </div>
 
-        {/* Visual Hero Box (Emoji or Image) */}
-        <div className="flex w-full flex-col items-center justify-center rounded-2xl border border-amber-100 bg-gradient-to-b from-amber-50/70 to-pink-50/50 p-4 shadow-sm">
-          {step.visual.imageSrc ? (
-            <div className="relative h-36 sm:h-44 w-full overflow-hidden rounded-xl shadow-inner">
-              <Image src={step.visual.imageSrc} alt={step.visual.title} fill className="object-cover" />
-            </div>
-          ) : (
-            <div className="text-6xl sm:text-7xl my-1 drop-shadow-md animate-bounce-short">
-              {step.visual.emoji ?? "🎯"}
-            </div>
-          )}
+        {/* Visual Hero Box (Emoji or Image) - Only rendered for MCQ, tap-match, drag-drop */}
+        {step.type === "mcq" || step.type === "tap-match" || step.type === "drag-drop" ? (
+          <div className="flex w-full flex-col items-center justify-center rounded-2xl border border-amber-100 bg-gradient-to-b from-amber-50/70 to-pink-50/50 p-3 sm:p-4 shadow-sm">
+            {step.visual.imageSrc ? (
+              <div className="relative h-32 sm:h-44 w-full overflow-hidden rounded-xl shadow-inner">
+                <Image src={step.visual.imageSrc} alt={step.visual.title} fill className="object-cover" />
+              </div>
+            ) : (
+              <div className="text-5xl sm:text-7xl my-1 drop-shadow-md animate-bounce-short">
+                {step.visual.emoji ?? "🎯"}
+              </div>
+            )}
 
-          {step.visual.title ? (
-            <h3 className="mt-1 text-xl sm:text-2xl font-black text-slate-800">{step.visual.title}</h3>
-          ) : null}
-          {step.visual.subtitle ? (
-            <p className="text-xs font-semibold text-slate-500">{step.visual.subtitle}</p>
-          ) : null}
-        </div>
+            {step.visual.title ? (
+              <h3 className="mt-1 text-lg sm:text-2xl font-black text-slate-800">{step.visual.title}</h3>
+            ) : null}
+            {step.visual.subtitle ? (
+              <p className="text-xs font-semibold text-slate-500">{step.visual.subtitle}</p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {/* Answer Choice Interaction Area */}
